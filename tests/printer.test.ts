@@ -7,7 +7,7 @@ import {
 import { assertValidPrintJob } from '../miniprogram/services/printer/print-job'
 import { assertValidRemoteImagePrintJob } from '../miniprogram/services/printer/remote-image-job'
 
-describe('30×30 mm 标签打印任务', () => {
+describe('方形标签打印任务', () => {
   it('按 8 dots/mm 建立 240×240 的单色位图', () => {
     const bitmap = createEmptyLabelBitmap()
     expect(T50_PRO_DOTS_PER_MILLIMETRE).toBe(8)
@@ -15,6 +15,14 @@ describe('30×30 mm 标签打印任务', () => {
     expect(bitmap.heightDots).toBe(240)
     expect(bitmap.bytesPerRow).toBe(30)
     expect(bitmap.data).toHaveLength(7200)
+  })
+
+  it('为 20×20 mm 标签建立 160×160 的单色位图', () => {
+    const bitmap = createEmptyLabelBitmap(20)
+    expect(bitmap.widthDots).toBe(160)
+    expect(bitmap.heightDots).toBe(160)
+    expect(bitmap.bytesPerRow).toBe(20)
+    expect(bitmap.data).toHaveLength(3200)
   })
 
   it('拒绝尺寸与数据不匹配的打印任务', () => {
@@ -52,6 +60,24 @@ describe('30×30 mm 标签打印任务', () => {
         heightMillimetres: 30,
         imageWidthMillimetres: 30,
         imageHeightMillimetres: 30,
+        density: 4,
+        horizontalOffsetMillimetres: 0,
+        verticalOffsetMillimetres: 0,
+        paperType: 1,
+        gapMillimetres: 3,
+        speedMillimetresPerSecond: 30,
+      }),
+    ).not.toThrow()
+
+    expect(() =>
+      assertValidRemoteImagePrintJob({
+        id: 'label-image-20mm',
+        copies: 1,
+        imageUrl: 'https://example.com/item-code.png',
+        widthMillimetres: 20,
+        heightMillimetres: 20,
+        imageWidthMillimetres: 20,
+        imageHeightMillimetres: 20,
         density: 4,
         horizontalOffsetMillimetres: 0,
         verticalOffsetMillimetres: 0,

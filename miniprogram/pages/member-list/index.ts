@@ -1,3 +1,4 @@
+import { getPageThemeStyle } from '../../services/theme'
 import {
   appointManager,
   disableMember,
@@ -9,11 +10,17 @@ import {
 } from '../../services/auth'
 import type { PublicMember, UserRole } from '../../types/domain'
 
+interface MemberView extends PublicMember {
+  roleText: string
+  statusText: string
+}
+
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     loading: true,
     processingId: '',
-    members: [] as PublicMember[],
+    members: [] as MemberView[],
     hasManager: false,
     currentRole: '' as UserRole | '',
     errorMessage: '',
@@ -35,7 +42,7 @@ Page({
     try {
       const members = await listMembers()
       this.setData({
-        members,
+        members: members.map(toMemberView),
         hasManager: members.some(
           (member) => member.status === 'APPROVED' && member.role === 'MANAGER',
         ),
@@ -136,4 +143,24 @@ Page({
 
 function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback
+}
+
+function toMemberView(member: PublicMember): MemberView {
+  const roleText: Record<UserRole, string> = {
+    OWNER: '所有者',
+    MANAGER: '实际管理者',
+    ADMIN: '管理员',
+    MEMBER: '普通成员',
+  }
+  const statusText: Record<PublicMember['status'], string> = {
+    PENDING: '待审核',
+    APPROVED: '已加入',
+    REJECTED: '已拒绝',
+    DISABLED: '已停用',
+  }
+  return {
+    ...member,
+    roleText: roleText[member.role],
+    statusText: statusText[member.status],
+  }
 }

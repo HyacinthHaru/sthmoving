@@ -2,6 +2,9 @@ import type {
   AuthSession,
   PendingJoinRequest,
   PublicMember,
+  User,
+  UserGender,
+  UserTheme,
 } from '../types/domain'
 import { callApi } from './cloud-api'
 
@@ -10,6 +13,21 @@ export function login(): Promise<AuthSession> {
     module: 'auth',
     action: 'login',
     payload: {},
+  })
+}
+
+export interface UpdateProfileInput {
+  displayName?: string
+  avatarUrl?: string
+  gender?: UserGender
+  theme?: UserTheme
+}
+
+export function updateProfile(input: UpdateProfileInput): Promise<User> {
+  return callApi<UpdateProfileInput, User>({
+    module: 'membership',
+    action: 'updateProfile',
+    payload: input,
   })
 }
 

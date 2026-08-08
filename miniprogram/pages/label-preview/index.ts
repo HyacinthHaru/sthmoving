@@ -1,3 +1,4 @@
+import { getPageThemeStyle } from '../../services/theme'
 import {
   generateItemMiniProgramCode,
   getItemLabel,
@@ -10,8 +11,19 @@ import type {
 } from '../../services/printer/types'
 import type { ItemDetail, ItemLabel } from '../../types/domain'
 
+type LabelSizeMillimetres = 20 | 30
+
+const labelSizeOptions: Array<{
+  value: LabelSizeMillimetres
+  label: string
+}> = [
+  { value: 30, label: '30 × 30 mm' },
+  { value: 20, label: '20 × 20 mm' },
+]
+
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     itemId: '',
     item: null as ItemDetail | null,
     label: null as ItemLabel | null,
@@ -27,6 +39,8 @@ Page({
     connectingDeviceId: '',
     printing: false,
     copiesInput: '1',
+    labelSizeOptions,
+    selectedLabelSize: 30 as LabelSizeMillimetres,
     printerErrorMessage: '',
     templateWidth: 240,
     templateHeight: 240,
@@ -175,6 +189,20 @@ Page({
     })
   },
 
+  handleLabelSizeChange(event: WechatMiniprogram.BaseEvent) {
+    if (this.data.printing) {
+      return
+    }
+    const size = Number(event.currentTarget.dataset['size'])
+    if (size !== 20 && size !== 30) {
+      return
+    }
+    this.setData({
+      selectedLabelSize: size as LabelSizeMillimetres,
+      printerErrorMessage: '',
+    })
+  },
+
   async handlePrintLabel() {
     if (this.data.printing || !this.data.labelImageUrl) {
       return
@@ -184,6 +212,7 @@ Page({
       this.setData({ printerErrorMessage: '打印份数必须是 1-99 的整数' })
       return
     }
+    const labelSize = this.data.selectedLabelSize
 
     this.setData({ printing: true, printerErrorMessage: '' })
     this.syncPrinterState()
@@ -192,10 +221,10 @@ Page({
         id: `label-${this.data.itemId}-${Date.now()}`,
         copies,
         imageUrl: this.data.labelImageUrl,
-        widthMillimetres: 30,
-        heightMillimetres: 30,
-        imageWidthMillimetres: 30,
-        imageHeightMillimetres: 30,
+        widthMillimetres: labelSize,
+        heightMillimetres: labelSize,
+        imageWidthMillimetres: labelSize,
+        imageHeightMillimetres: labelSize,
         density: 4,
         horizontalOffsetMillimetres: 0,
         verticalOffsetMillimetres: 0,

@@ -16,13 +16,14 @@
     "pages/label-preview/index",
     "pages/member-review/index",
     "pages/member-list/index",
-    "pages/category-manage/index"
+    "pages/category-manage/index",
+    "pages/profile/index"
   ],
   "window": {
     "navigationBarTitleText": "YUNA仓储",
-    "navigationBarBackgroundColor": "#0f766e",
+    "navigationBarBackgroundColor": "#17365d",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#f6f7f9"
+    "backgroundColor": "#f4f6f9"
   },
   "permission": {
     "scope.bluetooth": {
@@ -30,7 +31,8 @@
     }
   },
   "usingComponents": {
-    "text-entry-modal": "/components/text-entry-modal/index"
+    "text-entry-modal": "/components/text-entry-modal/index",
+    "bottom-navigation": "/components/bottom-navigation/index"
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"

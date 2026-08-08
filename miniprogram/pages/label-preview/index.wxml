@@ -1,10 +1,10 @@
-<view class="page">
+<view class="page" style="{{themeStyle}}">
   <view class="heading">
     <view class="title">物品小程序码</view>
     <view class="muted">{{item ? item.name : '正在读取物品信息'}}</view>
   </view>
 
-  <view wx:if="{{loading && !label}}" class="state muted">
+  <view wx:if="{{loading && !label}}" class="card state muted">
     正在加载小程序码…
   </view>
 
@@ -59,6 +59,20 @@
         <view class="muted printer-status">{{printerStatusText}}</view>
       </view>
       <view class="status-dot status-{{printerStatus}}"></view>
+    </view>
+
+    <view class="label-size-control">
+      <view class="control-label">标签尺寸</view>
+      <view class="size-options">
+        <view
+          wx:for="{{labelSizeOptions}}"
+          wx:key="value"
+          class="size-option {{selectedLabelSize === item.value ? 'size-option-active' : ''}}"
+          data-size="{{item.value}}"
+          bindtap="handleLabelSizeChange"
+        >{{item.label}}</view>
+      </view>
+      <view class="muted control-hint">默认 30 × 30 mm，请选择与已安装标签纸一致的尺寸</view>
     </view>
 
     <view class="copies-row">
@@ -129,14 +143,15 @@
       disabled="{{printerStatus !== 'READY' || printing}}"
       bindtap="handlePrintLabel"
     >
-      {{printing ? '正在打印' : '打印标签'}}
+      <block wx:if="{{printing}}">正在打印</block>
+      <block wx:else>打印 {{selectedLabelSize}} × {{selectedLabelSize}} mm 标签</block>
     </button>
   </view>
 
   <view class="card note-card">
     <view class="note-title">打印说明</view>
     <view class="muted">
-      使用微信返回的原始 PNG，通过蓝牙打印到 30 × 30 mm 间隙标签纸。首次打印请先搜索并连接 T50 Pro。
+      使用微信返回的原始 PNG，通过蓝牙打印到所选尺寸的间隙标签纸。首次打印请先确认纸张尺寸，再搜索并连接 T50 Pro。
     </view>
   </view>
 

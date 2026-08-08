@@ -1,29 +1,59 @@
 page {
   min-height: 100%;
-  background: #f6f7f9;
-  color: #182027;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f4f6f9;
+  color: #17211f;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
 }
 
 .page {
+  --brand-color: #17365d;
+  --brand-soft-color: #e8eef6;
   box-sizing: border-box;
   min-height: 100vh;
   padding: 48rpx 32rpx;
 }
 
+.heading .title {
+  line-height: 1.25;
+  letter-spacing: 0.5rpx;
+}
+
+.heading .muted {
+  font-size: 26rpx;
+  line-height: 1.55;
+}
+
 .card {
   padding: 32rpx;
-  border: 1rpx solid #e5e7eb;
-  border-radius: 24rpx;
+  border: 1rpx solid #e6ecea;
+  border-radius: 20rpx;
   background: #ffffff;
+  box-shadow: 0 8rpx 28rpx rgba(23, 54, 93, 0.065);
 }
 
 .primary-button {
-  border-radius: 16rpx;
-  background: #0f766e !important;
+  box-sizing: border-box;
+  border-radius: 14rpx;
+  background: var(--brand-color, #17365d) !important;
   color: #ffffff !important;
+  font-weight: 600;
 }
 
 .muted {
-  color: #6b7280;
+  color: #6d7976;
+}
+
+.retry-button {
+  box-sizing: border-box;
+  min-width: 184rpx;
+  height: 72rpx;
+  margin-right: auto;
+  margin-left: auto;
+  padding: 0 24rpx;
+  border: 1rpx solid #c7d2e0;
+  border-radius: 12rpx;
+  background: #ffffff;
+  color: var(--brand-color, #17365d);
+  font-size: 26rpx;
+  line-height: 72rpx;
 }

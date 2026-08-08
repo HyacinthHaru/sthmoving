@@ -15,6 +15,7 @@
 
 .field-label {
   margin-bottom: 14rpx;
+  color: #26364e;
   font-size: 28rpx;
   font-weight: 600;
 }
@@ -35,9 +36,9 @@
 .picker-input {
   box-sizing: border-box;
   width: 100%;
-  border: 1rpx solid #d1d5db;
-  border-radius: 16rpx;
-  background: #ffffff;
+  border: 1rpx solid #d7dee8;
+  border-radius: 14rpx;
+  background: #f8fafc;
 }
 
 .picker-input {
@@ -58,6 +59,7 @@
   max-height: 360rpx;
   padding: 20rpx 24rpx;
   overflow-y: auto;
+  line-height: 1.6;
 }
 
 .text-area {
@@ -177,14 +179,16 @@
 }
 
 .choice-selected {
-  border-color: #0f766e;
-  background: #ccfbf1 !important;
-  color: #0f766e !important;
+  border-color: var(--brand-color, #17365d);
+  background: var(--brand-soft-color, #e8eef6) !important;
+  color: var(--brand-color, #17365d) !important;
 }
 
 .continue-button,
 .submit-button {
-  margin-top: 28rpx;
+  min-height: 88rpx;
+  margin: 28rpx 0 0;
+  line-height: 88rpx;
 }
 
 .error {

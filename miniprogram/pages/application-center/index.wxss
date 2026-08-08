@@ -10,6 +10,7 @@
 
 .empty {
   padding: 56rpx 24rpx;
+  line-height: 1.6;
   text-align: center;
 }
 
@@ -25,14 +26,16 @@
 
 .request-heading {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16rpx;
 }
 
 .request-name {
+  min-width: 0;
   font-size: 32rpx;
   font-weight: 600;
+  word-break: break-all;
 }
 
 .item-code {
@@ -49,8 +52,8 @@
 }
 
 .status-APPROVED {
-  background: #ccfbf1;
-  color: #0f766e;
+  background: var(--brand-soft-color, #e8eef6);
+  color: var(--brand-color, #17365d);
 }
 
 .status-REJECTED {
@@ -60,6 +63,9 @@
 
 .reason {
   margin-top: 20rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 12rpx;
+  background: #f8fafc;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-all;

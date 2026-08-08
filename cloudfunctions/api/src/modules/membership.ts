@@ -2,8 +2,10 @@ import { ApiException } from '../errors'
 import { CloudMembershipRepository } from '../membership/cloud-repository'
 import {
   MembershipService,
+  type ProfileUpdateInput,
   type ReviewInput,
 } from '../membership/service'
+import type { UserTheme } from '../membership/types'
 import type { ApiHandler } from '../types'
 
 interface SubmitPayload {
@@ -29,6 +31,28 @@ interface TransferManagerPayload extends UserIdPayload {
   sourceManagerId?: unknown
 }
 
+interface UpdateProfilePayload {
+  displayName?: unknown
+  avatarUrl?: unknown
+  gender?: unknown
+  theme?: unknown
+}
+
+const userThemes: ReadonlySet<UserTheme> = new Set([
+  'NAVY',
+  'TEAL',
+  'BLUE',
+  'PURPLE',
+  'FOREST',
+  'WINE',
+  'SLATE',
+  'COFFEE',
+  'ROSE',
+  'INDIGO',
+  'OLIVE',
+  'RUST',
+])
+
 function createService(): MembershipService {
   return new MembershipService(new CloudMembershipRepository())
 }
@@ -51,7 +75,41 @@ function parseReviewInput(payload: unknown): ReviewInput {
   }
 }
 
+function parseProfileUpdate(payload: unknown): ProfileUpdateInput {
+  const input = payload as UpdateProfilePayload | undefined
+  const result: ProfileUpdateInput = {}
+  if (input?.displayName !== undefined) {
+    if (typeof input.displayName !== 'string') {
+      throw new ApiException('INVALID_DISPLAY_NAME', '昵称必须是字符串')
+    }
+    result.displayName = input.displayName
+  }
+  if (input?.avatarUrl !== undefined) {
+    if (typeof input.avatarUrl !== 'string') {
+      throw new ApiException('INVALID_AVATAR_URL', '头像地址必须是字符串')
+    }
+    result.avatarUrl = input.avatarUrl
+  }
+  if (input?.gender !== undefined) {
+    if (input.gender !== 'UNKNOWN' && input.gender !== 'FEMALE' && input.gender !== 'MALE') {
+      throw new ApiException('INVALID_GENDER', '性别选项无效')
+    }
+    result.gender = input.gender
+  }
+  if (input?.theme !== undefined) {
+    const theme = input.theme as UserTheme
+    if (typeof input.theme !== 'string' || !userThemes.has(theme)) {
+      throw new ApiException('INVALID_THEME', '主题颜色无效')
+    }
+    result.theme = theme
+  }
+  return result
+}
+
 export const membershipHandlers: Readonly<Record<string, ApiHandler>> = {
+  updateProfile: async (payload, context) =>
+    createService().updateProfile(context.openid, parseProfileUpdate(payload)),
+
   submitJoinRequest: async (payload, context) => {
     const input = payload as SubmitPayload | undefined
     const displayName = input?.displayName

@@ -1,8 +1,10 @@
+import { getPageThemeStyle } from '../../services/theme'
 import { validateCommitSummary } from '../../domain/validation'
 import { createOutboundRequest } from '../../services/outbound'
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     itemId: '',
     reason: '',
     submitting: false,

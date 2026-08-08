@@ -20,6 +20,7 @@
 
 .field-label {
   margin-bottom: 12rpx;
+  color: #26364e;
   font-size: 28rpx;
   font-weight: 600;
 }
@@ -28,13 +29,15 @@
   box-sizing: border-box;
   width: 100%;
   padding: 24rpx;
-  border: 1rpx solid #d1d5db;
-  border-radius: 16rpx;
-  background: #ffffff;
+  border: 1rpx solid #d7dee8;
+  border-radius: 14rpx;
+  background: #f8fafc;
 }
 
 .submit-button {
-  margin-top: 32rpx;
+  min-height: 88rpx;
+  margin: 32rpx 0 0;
+  line-height: 88rpx;
 }
 
 .role-label {

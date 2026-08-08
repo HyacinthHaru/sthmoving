@@ -1,3 +1,4 @@
+import { getPageThemeStyle, getThemeColor } from '../../services/theme'
 import {
   listPendingJoinRequests,
   reviewJoinRequest,
@@ -6,11 +7,16 @@ import { ApiClientError } from '../../services/cloud-api'
 import type { TextEntryModalInstance } from '../../components/text-entry-modal/types'
 import type { PendingJoinRequest } from '../../types/domain'
 
+interface PendingJoinRequestView extends PendingJoinRequest {
+  createdAtText: string
+}
+
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     loading: true,
     processingId: '',
-    requests: [] as PendingJoinRequest[],
+    requests: [] as PendingJoinRequestView[],
     errorMessage: '',
   },
 
@@ -25,7 +31,13 @@ Page({
   async loadRequests() {
     this.setData({ loading: true, errorMessage: '' })
     try {
-      this.setData({ requests: await listPendingJoinRequests() })
+      const requests = await listPendingJoinRequests()
+      this.setData({
+        requests: requests.map((request) => ({
+          ...request,
+          createdAtText: formatDateTime(request.createdAt),
+        })),
+      })
     } catch (error) {
       this.setData({
         errorMessage:
@@ -53,7 +65,7 @@ Page({
         title: '通过加入申请',
         content: '通过后，该成员可以访问组织仓库。',
         confirmText: '通过',
-        confirmColor: '#0f766e',
+        confirmColor: getThemeColor(),
       })
       if (!confirmation.confirm) {
         return
@@ -111,5 +123,17 @@ function isReviewRace(error: unknown): boolean {
     error instanceof ApiClientError &&
     (error.code === 'JOIN_REQUEST_REVIEWED' ||
       error.code === 'JOIN_APPLICANT_STATE_CONFLICT')
+  )
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+  const pad = (part: number) => part.toString().padStart(2, '0')
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    ` ${pad(date.getHours())}:${pad(date.getMinutes())}`
   )
 }

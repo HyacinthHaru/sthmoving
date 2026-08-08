@@ -1,8 +1,10 @@
+import { getPageThemeStyle } from '../../services/theme'
 import { organizationName } from '../../config/env'
 import { login } from '../../services/auth'
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     organizationName,
     loading: false,
     errorMessage: '',

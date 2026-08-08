@@ -12,7 +12,9 @@ import type {
   PendingJoinRequest,
   PublicMember,
   PublicUser,
+  UserGender,
   UserRecord,
+  UserTheme,
 } from './types'
 
 type ReviewDecision = 'APPROVE' | 'REJECT'
@@ -33,6 +35,13 @@ export interface MemberRoleInput {
 export interface ManagerTargetInput {
   targetUserId: string
   sourceManagerId?: string
+}
+
+export interface ProfileUpdateInput {
+  displayName?: string
+  avatarUrl?: string
+  gender?: UserGender
+  theme?: UserTheme
 }
 
 export class MembershipService {
@@ -157,6 +166,7 @@ export class MembershipService {
         status: 'APPROVED',
         reviewed_by: userId,
         reviewed_at: now,
+        joined_at: existing?.joined_at ?? now,
         created_at: existing?.created_at ?? now,
         updated_at: now,
       }
@@ -285,6 +295,7 @@ export class MembershipService {
         ...applicant,
         role: approved ? request.requested_role ?? 'MEMBER' : applicant.role,
         status: userStatus,
+        ...(approved ? { joined_at: applicant.joined_at ?? now } : {}),
         reviewed_by: reviewerId,
         reviewed_at: now,
         updated_at: now,
@@ -296,6 +307,7 @@ export class MembershipService {
           ...applicant,
           role: approved ? request.requested_role ?? 'MEMBER' : applicant.role,
           status: userStatus,
+          ...(approved ? { joined_at: applicant.joined_at ?? now } : {}),
           reviewed_by: reviewerId,
           reviewed_at: now,
           updated_at: now,
@@ -316,6 +328,33 @@ export class MembershipService {
       requireMemberManager(actor, openid)
       const users = await unitOfWork.listUsers(200)
       return users.map(toPublicMember)
+    })
+  }
+
+  async updateProfile(
+    openid: string,
+    input: ProfileUpdateInput,
+  ): Promise<PublicUser> {
+    const updates = validateProfileUpdate(input)
+    return this.repository.runTransaction(async (unitOfWork) => {
+      const user = await unitOfWork.getUser(getUserId(openid))
+      requireApprovedIdentity(user, openid)
+      if (
+        updates.avatar_url &&
+        !updates.avatar_url.includes(`/avatars/${user._id}/`)
+      ) {
+        throw new ApiException(
+          'INVALID_AVATAR_URL',
+          '头像文件不属于当前账号',
+        )
+      }
+      const updated: UserRecord = {
+        ...user,
+        ...updates,
+        updated_at: this.now(),
+      }
+      await unitOfWork.setUser(updated)
+      return toPublicUser(updated)
     })
   }
 
@@ -559,6 +598,53 @@ function validateDisplayName(value: string): string {
   return displayName
 }
 
+function validateProfileUpdate(input: ProfileUpdateInput): Partial<UserRecord> {
+  const updates: Partial<UserRecord> = {}
+  if (input.displayName !== undefined) {
+    updates.display_name = validateDisplayName(input.displayName)
+  }
+  if (input.avatarUrl !== undefined) {
+    const avatarUrl = input.avatarUrl.trim()
+    if (!avatarUrl.startsWith('cloud://') || avatarUrl.length > 500) {
+      throw new ApiException('INVALID_AVATAR_URL', '头像必须是有效的云存储文件')
+    }
+    updates.avatar_url = avatarUrl
+  }
+  if (input.gender !== undefined) {
+    if (input.gender !== 'UNKNOWN' && input.gender !== 'FEMALE' && input.gender !== 'MALE') {
+      throw new ApiException('INVALID_GENDER', '性别选项无效')
+    }
+    updates.gender = input.gender
+  }
+  if (input.theme !== undefined) {
+    if (!isUserTheme(input.theme)) {
+      throw new ApiException('INVALID_THEME', '主题颜色无效')
+    }
+    updates.theme = input.theme
+  }
+  if (Object.keys(updates).length === 0) {
+    throw new ApiException('EMPTY_PROFILE_UPDATE', '没有需要保存的个人资料')
+  }
+  return updates
+}
+
+function isUserTheme(value: string): value is UserTheme {
+  return [
+    'NAVY',
+    'TEAL',
+    'BLUE',
+    'PURPLE',
+    'FOREST',
+    'WINE',
+    'SLATE',
+    'COFFEE',
+    'ROSE',
+    'INDIGO',
+    'OLIVE',
+    'RUST',
+  ].includes(value)
+}
+
 function validateReviewComment(
   value: string | undefined,
   decision: ReviewDecision,
@@ -584,8 +670,15 @@ function toPublicUser(user: UserRecord): PublicUser {
     id: user._id,
     displayName: user.display_name,
     ...(user.avatar_url ? { avatarUrl: user.avatar_url } : {}),
+    gender: user.gender ?? 'UNKNOWN',
+    theme: user.theme ?? 'NAVY',
     role: user.role,
     status: user.status,
+    ...(user.joined_at
+      ? { joinedAt: user.joined_at }
+      : user.status === 'APPROVED'
+        ? { joinedAt: user.reviewed_at ?? user.created_at }
+        : {}),
     createdAt: user.created_at,
     updatedAt: user.updated_at,
   }

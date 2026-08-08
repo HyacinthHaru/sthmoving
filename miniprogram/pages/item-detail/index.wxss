@@ -5,8 +5,11 @@
 }
 
 .detail-navigation {
+  position: sticky;
+  z-index: 100;
+  top: 0;
   box-sizing: border-box;
-  background: #0f766e;
+  background: var(--brand-color, #17365d);
   color: #ffffff;
 }
 
@@ -24,67 +27,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 72rpx;
-  height: 72rpx;
+  width: 68rpx;
+  height: 68rpx;
 }
 
 .nav-home-button {
-  opacity: 0.96;
-  border-radius: 0;
-  background: transparent;
+  margin-left: 4rpx;
+}
+
+.nav-back-icon {
+  width: 36rpx;
+  height: 36rpx;
 }
 
 .nav-home-icon {
-  position: relative;
-  width: 40rpx;
-  height: 40rpx;
-  margin-top: 4rpx;
-  border-radius: 0;
+  width: 38rpx;
+  height: 38rpx;
 }
 
-.nav-home-roof {
-  position: absolute;
-  width: 23rpx;
-  height: 4rpx;
-  background: #ffffff;
-  transform-origin: left center;
-}
-
-.nav-home-roof-left {
-  left: 4rpx;
-  top: 18rpx;
-  transform: rotate(-45deg);
-}
-
-.nav-home-roof-right {
-  left: 20rpx;
-  top: 2rpx;
-  transform: rotate(45deg);
-}
-
-.nav-home-body {
-  position: absolute;
-  bottom: 1rpx;
-  left: 7rpx;
-  width: 26rpx;
-  height: 22rpx;
-  box-sizing: border-box;
-  border-right: 3rpx solid #ffffff;
-  border-bottom: 3rpx solid #ffffff;
-  border-left: 3rpx solid #ffffff;
-}
-
-.nav-home-door {
-  position: absolute;
-  z-index: 1;
-  bottom: 1rpx;
-  left: 15rpx;
-  width: 10rpx;
-  height: 11rpx;
-  box-sizing: border-box;
-  border-top: 4rpx solid #ffffff;
-  border-right: 4rpx solid #ffffff;
-  border-left: 4rpx solid #ffffff;
+.nav-icon-button-active {
+  opacity: 0.62;
 }
 
 .nav-title {
@@ -95,18 +57,6 @@
   font-weight: 600;
   white-space: nowrap;
   transform: translateX(-50%);
-}
-
-.nav-back-button {
-  margin-right: 4rpx;
-}
-
-.nav-back-arrow {
-  width: 22rpx;
-  height: 22rpx;
-  border-bottom: 4rpx solid #ffffff;
-  border-left: 4rpx solid #ffffff;
-  transform: rotate(45deg);
 }
 
 .item-image {
@@ -140,8 +90,8 @@
   flex: none;
   padding: 6rpx 16rpx;
   border-radius: 999rpx;
-  background: #ccfbf1;
-  color: #0f766e;
+  background: var(--brand-soft-color, #e8eef6);
+  color: var(--brand-color, #17365d);
   font-size: 24rpx;
 }
 
@@ -220,14 +170,22 @@
   margin-top: 24rpx;
 }
 
+.review-actions .action-button,
+.off-shelf-actions .action-button {
+  height: 80rpx;
+  margin: 0;
+  border-radius: 14rpx;
+  line-height: 80rpx;
+}
+
 .action-button {
   box-sizing: border-box;
   flex: 1;
   min-width: 0;
-  height: 76rpx;
+  height: 80rpx;
   margin: 0;
   padding: 0 20rpx;
-  line-height: 76rpx;
+  line-height: 80rpx;
 }
 
 .state {
@@ -248,10 +206,10 @@
 }
 
 .secondary-button {
-  border: 1rpx solid #0f766e;
+  border: 1rpx solid var(--brand-color, #17365d);
   border-radius: 16rpx;
   background: #ffffff;
-  color: #0f766e;
+  color: var(--brand-color, #17365d);
 }
 
 .logs-button {

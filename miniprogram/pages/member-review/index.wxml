@@ -1,10 +1,10 @@
-<view class="page">
+<view class="page" style="{{themeStyle}}">
   <view class="heading">
     <view class="title">待审核成员</view>
     <view class="muted">只显示当前尚未处理的加入申请</view>
   </view>
 
-  <view wx:if="{{loading && !requests.length}}" class="muted empty">
+  <view wx:if="{{loading && !requests.length}}" class="card muted empty">
     正在加载…
   </view>
   <view wx:elif="{{!requests.length}}" class="card empty">
@@ -16,11 +16,13 @@
     wx:key="id"
     class="card request-card"
   >
-    <view class="request-name">{{item.displayName}}</view>
-    <view class="muted request-role">
-      申请角色：{{item.requestedRole === 'ADMIN' ? '管理员' : '普通成员'}}
+    <view class="request-heading">
+      <view class="request-name">{{item.displayName}}</view>
+      <view class="request-role">
+        {{item.requestedRole === 'ADMIN' ? '申请管理员' : '申请普通成员'}}
+      </view>
     </view>
-    <view class="muted request-time">申请时间：{{item.createdAt}}</view>
+    <view class="muted request-time">申请时间：{{item.createdAtText}}</view>
     <view class="actions">
       <button
         class="reject-button"

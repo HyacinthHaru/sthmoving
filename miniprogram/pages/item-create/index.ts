@@ -1,3 +1,4 @@
+import { getPageThemeStyle } from '../../services/theme'
 import {
   MAX_ITEM_IMAGES,
   validateCategoryName,
@@ -22,6 +23,7 @@ import type {
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     name: '',
     description: '',
     quantityMode: 'SINGLE' as QuantityMode,

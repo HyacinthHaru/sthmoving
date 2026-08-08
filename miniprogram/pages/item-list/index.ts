@@ -1,3 +1,4 @@
+import { getPageThemeStyle } from '../../services/theme'
 import { listCategories } from '../../services/categories'
 import { listItems } from '../../services/items'
 import { batchDirectOutbound } from '../../services/outbound'
@@ -24,6 +25,7 @@ let requestSequence = 0
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     keyword: '',
     categories: [] as Category[],
     categoryNames: ['全部分类'],

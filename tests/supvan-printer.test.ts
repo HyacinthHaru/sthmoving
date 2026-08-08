@@ -44,7 +44,7 @@ describe('硕方 T50 Pro 适配器', () => {
     expect(adapter.getConnectedDevice()?.name).toBe('T50PRO-001')
   })
 
-  it('按 30×30 mm 参数打印 HTTPS 小程序码原图', async () => {
+  it.each([30, 20] as const)('按 %d mm 方形尺寸打印 HTTPS 小程序码原图', async (size) => {
     let capturedPage: Record<string, unknown> | undefined
     const layouts: Array<{ width: number; height: number }> = []
     const sdk = createSdk({
@@ -53,8 +53,8 @@ describe('硕方 T50 Pro 适配器', () => {
         callback({
           ResultCode: 100,
           ResultValue: {
-            width: 240,
-            height: 240,
+            width: size * 8,
+            height: size * 8,
             barcodeWidth: 20,
             barcodeHeight: 20,
             qrcodeWidth: 20,
@@ -75,22 +75,28 @@ describe('硕方 T50 Pro 适配器', () => {
     await adapter.discover(() => undefined)
     await adapter.connect('printer-1')
 
-    await adapter.print(printJob)
+    await adapter.print({
+      ...printJob,
+      widthMillimetres: size,
+      heightMillimetres: size,
+      imageWidthMillimetres: size,
+      imageHeightMillimetres: size,
+    })
 
     expect(capturedPage).toMatchObject({
-      Width: 30,
-      Height: 30,
+      Width: size,
+      Height: size,
       Copies: 2,
       Density: 4,
       PaperType: 1,
       Gap: 3,
       DeviceSn: 'T50PRO-001',
       ImageUrl: 'https://example.com/item-code.png',
-      ImageWidth: 30,
-      ImageHeight: 30,
+      ImageWidth: size,
+      ImageHeight: size,
       Speed: 30,
     })
-    expect(layouts).toEqual([{ width: 240, height: 240 }])
+    expect(layouts).toEqual([{ width: size * 8, height: size * 8 }])
     expect(adapter.getStatus()).toBe('READY')
   })
 

@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page" style="{{themeStyle}}">
   <view class="heading">
     <view class="title">待处理离库申请</view>
     <view class="muted">管理员或所有者可同意、拒绝成员的离库申请</view>
@@ -6,7 +6,7 @@
 
   <view wx:if="{{refreshing}}" class="refreshing muted">正在更新…</view>
 
-  <view wx:if="{{loading && !requests.length}}" class="muted empty">
+  <view wx:if="{{loading && !requests.length}}" class="card muted empty">
     正在加载…
   </view>
   <view wx:elif="{{errorMessage && !requests.length}}" class="card empty">
@@ -33,7 +33,7 @@
       data-item-id="{{item.item.id}}"
       catchtap="handleViewItem"
     >查看物品详情</button>
-    <view class="muted request-time">申请时间：{{item.createdAt}}</view>
+    <view class="muted request-time">申请时间：{{item.createdAtText}}</view>
     <view class="actions">
       <button
         class="reject-button"

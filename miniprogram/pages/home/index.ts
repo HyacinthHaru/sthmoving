@@ -1,11 +1,13 @@
 import { login, listPendingJoinRequests } from '../../services/auth'
 import { listPendingOutboundRequests } from '../../services/outbound'
+import { applyNavigationTheme, getPageThemeStyle, getThemeStyle, storeTheme } from '../../services/theme'
 import type { User } from '../../types/domain'
 
 interface Shortcut {
   key: string
   title: string
   description: string
+  icon: string
   badge?: number
 }
 
@@ -16,10 +18,30 @@ interface ShortcutGroup {
 }
 
 const personalShortcuts: Shortcut[] = [
-  { key: 'scan', title: '扫码查询', description: '扫描物品上的小程序码' },
-  { key: 'search', title: '文字搜索', description: '按名称或详情查找物品' },
-  { key: 'create', title: '登记物品', description: '录入信息并绑定实体标签' },
-  { key: 'requests', title: '申请中心', description: '查看我的离库申请' },
+  {
+    key: 'scan',
+    title: '扫码查询',
+    description: '扫描物品上的小程序码',
+    icon: '/assets/icons/scan.svg',
+  },
+  {
+    key: 'search',
+    title: '文字搜索',
+    description: '按名称或详情查找物品',
+    icon: '/assets/icons/search.svg',
+  },
+  {
+    key: 'create',
+    title: '登记物品',
+    description: '录入信息并绑定实体标签',
+    icon: '/assets/icons/file-add.svg',
+  },
+  {
+    key: 'requests',
+    title: '申请中心',
+    description: '查看我的离库申请',
+    icon: '/assets/icons/profile.svg',
+  },
 ]
 
 const memberShortcutGroups: ShortcutGroup[] = [
@@ -28,6 +50,7 @@ const memberShortcutGroups: ShortcutGroup[] = [
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     userName: '',
     loading: true,
     shortcutGroups: memberShortcutGroups,
@@ -46,6 +69,8 @@ Page({
         return
       }
       getApp<IAppOption>().globalData.currentUser = session.user
+      storeTheme(session.user.theme)
+      await applyNavigationTheme(session.user.theme)
       const reviewer =
         session.user.role === 'ADMIN' ||
         session.user.role === 'MANAGER' ||
@@ -57,6 +82,7 @@ Page({
           ])
         : [[], []]
       this.setData({
+        themeStyle: getThemeStyle(session.user.theme),
         userName: session.user.displayName,
         shortcutGroups: getShortcutGroups(
           session.user,
@@ -141,11 +167,13 @@ function getShortcutGroups(
             ...(pendingJoinCount > 0 ? { badge: pendingJoinCount } : {}),
             title: '成员审核',
             description: '处理新的组织加入申请',
+            icon: '/assets/icons/audit.svg',
           },
           {
             key: 'categories',
             title: '分类管理',
             description: '整理、重命名或停用自定义分类',
+            icon: '/assets/icons/appstore.svg',
           },
           {
             key: 'outbound',
@@ -154,16 +182,19 @@ function getShortcutGroups(
               : {}),
             title: '离库审核',
             description: '处理成员提交的离库申请',
+            icon: '/assets/icons/export.svg',
           },
           {
             key: 'off-shelf',
             title: '离库物品',
             description: '查看和删除已离库物品',
+            icon: '/assets/icons/database.svg',
           },
           {
             key: 'member-list',
             title: '成员管理',
             description: '管理成员、管理员与实际管理者',
+            icon: '/assets/icons/team.svg',
           },
         ],
       },

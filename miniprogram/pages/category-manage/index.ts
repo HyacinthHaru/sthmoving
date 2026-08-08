@@ -1,3 +1,4 @@
+import { getPageThemeStyle, getThemeColor } from '../../services/theme'
 import {
   createCategory,
   deleteCategory,
@@ -10,6 +11,7 @@ import type { Category } from '../../types/domain'
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     categories: [] as Category[],
     categoryName: '',
     loading: true,
@@ -89,7 +91,7 @@ Page({
       value: category.name,
       placeholder: '输入新的分类名称',
       confirmText: '保存',
-      confirmColor: '#0f766e',
+      confirmColor: getThemeColor(),
       maxLength: 40,
     })
     if (name === null) {
@@ -120,7 +122,7 @@ Page({
         ? '停用后，新登记和查询筛选将不再显示该分类，历史物品不受影响。'
         : '启用后，该分类会重新出现在登记和查询筛选中。',
       confirmText: disabling ? '停用' : '启用',
-      confirmColor: disabling ? '#b45309' : '#0f766e',
+      confirmColor: disabling ? '#b45309' : getThemeColor(),
     })
     if (!result.confirm) {
       return

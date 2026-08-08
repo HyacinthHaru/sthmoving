@@ -1,9 +1,16 @@
-<view class="page">
-  <view class="heading">
-    <view class="title">仓库工作台</view>
-    <view class="muted">
-      {{userName ? userName + '，欢迎回来' : '正在确认身份'}}
+<view class="page home-page" style="{{themeStyle}}">
+  <view class="home-header">
+    <view class="heading">
+      <view class="eyebrow">
+        <view class="eyebrow-mark"></view>
+        <text>YUNA 个物终端</text>
+      </view>
+      <view class="title">仓库工作台</view>
+      <view class="muted">
+        {{userName ? userName + '，欢迎回来' : '正在确认身份'}}
+      </view>
     </view>
+    <view class="page-switch"><bottom-navigation active="home" /></view>
   </view>
   <view
     wx:for="{{shortcutGroups}}"
@@ -23,13 +30,18 @@
         class="card shortcut"
         data-key="{{shortcut.key}}"
         bindtap="handleShortcut"
+        hover-class="shortcut-active"
+        hover-stay-time="80"
       >
-        <view class="shortcut-title-row">
-          <view class="shortcut-title">{{shortcut.title}}</view>
+        <view class="shortcut-top-row">
+          <view class="shortcut-icon-wrap">
+            <image class="shortcut-icon" src="{{shortcut.icon}}" mode="aspectFit" />
+          </view>
           <view wx:if="{{shortcut.badge}}" class="shortcut-badge">
             {{shortcut.badge}}
           </view>
         </view>
+        <view class="shortcut-title">{{shortcut.title}}</view>
         <view class="muted shortcut-description">
           {{shortcut.description}}
         </view>

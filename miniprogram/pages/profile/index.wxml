@@ -1,0 +1,94 @@
+<view class="page profile-page" style="{{themeStyle}}">
+  <view class="profile-header">
+    <view class="heading">
+      <view class="title">个人信息</view>
+      <view class="muted">管理你的资料与界面偏好</view>
+    </view>
+    <view class="page-switch"><bottom-navigation active="profile" /></view>
+  </view>
+
+  <view wx:if="{{loading}}" class="card state muted">正在加载个人资料…</view>
+  <view wx:elif="{{errorMessage && !userId}}" class="card state">
+    <view class="error">{{errorMessage}}</view>
+    <button class="retry-button" bindtap="loadProfile">重新加载</button>
+  </view>
+
+  <block wx:else>
+    <view class="card identity-card">
+      <view
+        class="avatar"
+        style="background: {{avatarColor}};"
+        bindtap="handleAvatarChange"
+      >
+        <image wx:if="{{avatarDisplayUrl}}" class="avatar-image" src="{{avatarDisplayUrl}}" mode="aspectFill" />
+        <text wx:else>{{avatarText}}</text>
+        <view class="avatar-edit">更换</view>
+      </view>
+      <view class="identity-main">
+        <view class="identity-name">{{displayNameInput || '微信用户'}}</view>
+        <view class="identity-badges">
+          <text class="role-badge">{{roleText}}</text>
+          <text class="status-badge">{{statusText}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="card form-card">
+      <view class="section-title">基本资料</view>
+      <view class="info-row nickname-row">
+        <text class="info-label">昵称</text>
+        <view class="editable-value info-content">
+          <view class="info-value editable-text">{{displayNameInput || '微信用户'}}</view>
+          <view
+            class="inline-edit-button {{savingNickname ? 'inline-edit-button-disabled' : ''}}"
+            hover-class="inline-edit-button-hover"
+            bindtap="handleEditDisplayName"
+          >编辑</view>
+        </view>
+      </view>
+      <view class="info-row picker-row">
+        <text class="info-label">性别</text>
+        <view class="editable-value info-content">
+          <view class="info-value editable-text">{{genderLabels[genderIndex]}}</view>
+          <picker class="inline-picker" range="{{genderLabels}}" value="{{genderIndex}}" bindchange="handleGenderChange">
+            <view class="inline-edit-button" hover-class="inline-edit-button-hover">编辑</view>
+          </picker>
+        </view>
+      </view>
+      <view class="info-row">
+        <text class="info-label">身份</text>
+        <text class="info-value info-content">{{roleText}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">加入时间</text>
+        <text class="info-value info-content">{{joinedAtText}}</text>
+      </view>
+    </view>
+
+    <view class="card theme-card">
+      <view class="section-title">界面颜色</view>
+      <view class="muted theme-description">选择经过文字对比度检查的主题颜色</view>
+      <view class="theme-options">
+        <view
+          wx:for="{{themes}}"
+          wx:key="key"
+          class="theme-option {{selectedTheme === item.key ? 'theme-option-active' : ''}}"
+          style="background: {{item.softColor}}; border-color: {{item.color}}; color: {{item.color}};"
+          data-theme="{{item.key}}"
+          bindtap="handleThemeChange"
+        >
+          <view class="theme-swatch" style="background: {{item.color}};"></view>
+          <text>{{item.label}}</text>
+          <text class="theme-check">{{selectedTheme === item.key ? '✓' : ''}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{errorMessage}}" class="error form-error">{{errorMessage}}</view>
+    <button class="primary-button save-button" loading="{{saving}}" disabled="{{saving || savingNickname || uploadingAvatar}}" bindtap="handleSave">
+      保存个人资料
+    </button>
+  </block>
+
+  <text-entry-modal id="nicknameModal" />
+</view>

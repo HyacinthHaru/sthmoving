@@ -2,6 +2,22 @@ export type UserRole = 'OWNER' | 'MANAGER' | 'ADMIN' | 'MEMBER'
 
 export type UserStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'DISABLED'
 
+export type UserGender = 'UNKNOWN' | 'FEMALE' | 'MALE'
+
+export type UserTheme =
+  | 'NAVY'
+  | 'TEAL'
+  | 'BLUE'
+  | 'PURPLE'
+  | 'FOREST'
+  | 'WINE'
+  | 'SLATE'
+  | 'COFFEE'
+  | 'ROSE'
+  | 'INDIGO'
+  | 'OLIVE'
+  | 'RUST'
+
 export type AccessState =
   | 'UNAPPLIED'
   | 'PENDING'
@@ -21,8 +37,11 @@ export interface User {
   id: string
   displayName: string
   avatarUrl?: string
+  gender: UserGender
+  theme: UserTheme
   role: UserRole
   status: UserStatus
+  joinedAt?: string
   createdAt: string
   updatedAt: string
 }

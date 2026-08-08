@@ -1,16 +1,54 @@
+.home-page {
+  padding-top: 32rpx;
+}
+
+.home-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 44rpx;
+}
+
 .heading {
-  margin-bottom: 40rpx;
+  min-width: 0;
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.page-switch {
+  flex: none;
+  margin-top: 28rpx;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  margin-bottom: 14rpx;
+  color: var(--brand-color, #17365d);
+  font-size: 26rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
+
+.eyebrow-mark {
+  width: 32rpx;
+  height: 7rpx;
+  background: var(--brand-color, #17365d);
 }
 
 .title {
-  margin-bottom: 8rpx;
-  font-size: 48rpx;
+  margin-bottom: 10rpx;
+  color: #17211f;
+  font-size: 46rpx;
   font-weight: 700;
+  letter-spacing: 1rpx;
 }
 
 .grid {
   display: grid;
-  gap: 24rpx;
+  gap: 20rpx;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -21,37 +59,62 @@
 .group-heading {
   display: flex;
   align-items: center;
-  gap: 20rpx;
-  margin-bottom: 20rpx;
+  gap: 18rpx;
+  margin-bottom: 22rpx;
 }
 
 .group-title {
   flex: none;
-  color: #374151;
-  font-size: 28rpx;
+  color: #33413e;
+  font-size: 27rpx;
   font-weight: 700;
 }
 
 .group-divider {
   flex: 1;
-  height: 2rpx;
-  background: #dbe3e8;
+  height: 1rpx;
+  background: #dce4ee;
 }
 
 .shortcut {
-  min-height: 180rpx;
+  box-sizing: border-box;
+  min-height: 224rpx;
+  padding: 26rpx;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.shortcut-active {
+  opacity: 0.82;
+  transform: scale(0.98);
+}
+
+.shortcut-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-height: 68rpx;
+}
+
+.shortcut-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 16rpx;
+  background: var(--brand-soft-color, #e8eef6);
+}
+
+.shortcut-icon {
+  width: 36rpx;
+  height: 36rpx;
 }
 
 .shortcut-title {
+  margin-top: 20rpx;
+  color: #17211f;
   font-size: 32rpx;
   font-weight: 600;
-}
-
-.shortcut-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12rpx;
 }
 
 .shortcut-badge {
@@ -66,6 +129,7 @@
 }
 
 .shortcut-description {
-  margin-top: 16rpx;
+  margin-top: 10rpx;
   font-size: 24rpx;
+  line-height: 1.45;
 }

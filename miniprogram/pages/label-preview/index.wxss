@@ -14,10 +14,13 @@
 }
 
 .code-image {
+  box-sizing: border-box;
   display: block;
   width: 560rpx;
   height: 560rpx;
   margin: 0 auto;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 16rpx;
   background: #ffffff;
 }
 
@@ -47,8 +50,8 @@
   width: 48rpx;
   height: 48rpx;
   margin: 0 auto 24rpx;
-  border: 5rpx solid #ccfbf1;
-  border-top-color: #0f766e;
+  border: 5rpx solid var(--brand-soft-color, #e8eef6);
+  border-top-color: var(--brand-color, #17365d);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
 }
@@ -91,6 +94,38 @@
   font-size: 24rpx;
 }
 
+.label-size-control {
+  margin-top: 28rpx;
+  padding-top: 28rpx;
+  border-top: 1rpx solid #e5e7eb;
+}
+
+.size-options {
+  display: grid;
+  gap: 16rpx;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16rpx;
+}
+
+.size-option {
+  box-sizing: border-box;
+  height: 72rpx;
+  border: 1rpx solid #cbd5e1;
+  border-radius: 12rpx;
+  background: #ffffff;
+  color: #475569;
+  font-size: 27rpx;
+  line-height: 70rpx;
+  text-align: center;
+}
+
+.size-option-active {
+  border-color: var(--brand-color, #17365d);
+  background: var(--brand-soft-color, #e8eef6);
+  color: var(--brand-color, #17365d);
+  font-weight: 600;
+}
+
 .status-dot {
   flex: 0 0 auto;
   width: 20rpx;
@@ -100,7 +135,7 @@
 }
 
 .status-READY {
-  background: #0f766e;
+  background: var(--brand-color, #17365d);
 }
 
 .status-DISCOVERING,
@@ -125,8 +160,9 @@
   width: 160rpx;
   height: 76rpx;
   padding: 0 20rpx;
-  border: 1rpx solid #d1d5db;
+  border: 1rpx solid #d7dee8;
   border-radius: 12rpx;
+  background: #f8fafc;
   text-align: center;
 }
 
@@ -141,14 +177,15 @@
   min-height: 84rpx;
   margin: 0;
   font-size: 28rpx;
+  border-radius: 14rpx;
   line-height: 84rpx;
 }
 
 .secondary-action,
 .device-connect {
-  border: 1rpx solid #0f766e;
+  border: 1rpx solid var(--brand-color, #17365d);
   background: #ffffff;
-  color: #0f766e;
+  color: var(--brand-color, #17365d);
 }
 
 .device-list {
@@ -173,6 +210,7 @@
   min-height: 68rpx;
   margin: 0;
   font-size: 26rpx;
+  border-radius: 12rpx;
   line-height: 68rpx;
 }
 
@@ -184,7 +222,9 @@
 }
 
 .print-button {
-  margin-top: 28rpx;
+  min-height: 88rpx;
+  margin: 28rpx 0 0;
+  line-height: 88rpx;
 }
 
 .sdk-canvas-host {

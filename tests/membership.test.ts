@@ -289,4 +289,48 @@ describe('成员身份服务', () => {
       'ACCOUNT_NOT_ACTIVE',
     )
   })
+
+  it('已加入成员可以更新自己的昵称、头像、性别和主题', async () => {
+    const repository = new InMemoryMembershipRepository()
+    const service = createService(repository)
+    const owner = await service.bootstrapOwner('owner-openid')
+
+    const avatarUrl = `cloud://example-env.bucket/avatars/${owner.user.id}/owner.jpg`
+    const updated = await service.updateProfile('owner-openid', {
+      displayName: '仓库负责人',
+      avatarUrl,
+      gender: 'FEMALE',
+      theme: 'RUST',
+    })
+
+    expect(updated).toMatchObject({
+      id: owner.user.id,
+      displayName: '仓库负责人',
+      avatarUrl,
+      gender: 'FEMALE',
+      theme: 'RUST',
+      joinedAt: '2026-07-29T13:00:00.000Z',
+    })
+  })
+
+  it('未通过审核的账号不能更新资料，并拒绝空更新和无效字段', async () => {
+    const repository = new InMemoryMembershipRepository()
+    const service = createService(repository)
+    await service.login('pending-openid')
+    await expectApiCode(
+      service.updateProfile('pending-openid', { displayName: '待审核用户' }),
+      'ACCOUNT_NOT_ACTIVE',
+    )
+
+    await service.bootstrapOwner('owner-openid')
+    await expectApiCode(service.updateProfile('owner-openid', {}), 'EMPTY_PROFILE_UPDATE')
+    await expectApiCode(
+      service.updateProfile('owner-openid', { avatarUrl: 'https://example.com/avatar.jpg' }),
+      'INVALID_AVATAR_URL',
+    )
+    await expectApiCode(
+      service.updateProfile('owner-openid', { avatarUrl: 'cloud://example-env.bucket/avatars/another-user/avatar.jpg' }),
+      'INVALID_AVATAR_URL',
+    )
+  })
 })

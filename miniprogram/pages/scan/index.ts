@@ -1,7 +1,9 @@
+import { getPageThemeStyle } from '../../services/theme'
 import { parseScanTarget } from './parser'
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     scanning: false,
     errorMessage: '',
     autoStarted: false,

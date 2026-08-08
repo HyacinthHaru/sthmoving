@@ -1,3 +1,4 @@
+import { getPageThemeStyle, getThemeColor } from '../../services/theme'
 import {
   approveOutboundRequest,
   listPendingOutboundRequests,
@@ -8,14 +9,19 @@ import { validateCommitSummary } from '../../domain/validation'
 import type { TextEntryModalInstance } from '../../components/text-entry-modal/types'
 import type { OutboundRequest } from '../../types/domain'
 
+interface OutboundRequestView extends OutboundRequest {
+  createdAtText: string
+}
+
 let requestSequence = 0
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     loading: true,
     refreshing: false,
     processingId: '',
-    requests: [] as OutboundRequest[],
+    requests: [] as OutboundRequestView[],
     errorMessage: '',
   },
 
@@ -47,7 +53,12 @@ Page({
       if (sequence !== requestSequence) {
         return
       }
-      this.setData({ requests })
+      this.setData({
+        requests: requests.map((request) => ({
+          ...request,
+          createdAtText: formatDateTime(request.createdAt),
+        })),
+      })
     } catch (error) {
       if (sequence !== requestSequence) {
         return
@@ -79,7 +90,7 @@ Page({
         title: '同意离库申请',
         content: '确认同意该物品离库吗？',
         confirmText: '同意',
-        confirmColor: '#0f766e',
+        confirmColor: getThemeColor(),
       })
       if (!confirmation.confirm) {
         return
@@ -163,6 +174,18 @@ function getErrorMessage(error: unknown, fallback: string): string {
     return error.errMsg
   }
   return fallback
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+  const pad = (part: number) => part.toString().padStart(2, '0')
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    ` ${pad(date.getHours())}:${pad(date.getMinutes())}`
+  )
 }
 
 function isReviewRace(error: unknown): boolean {

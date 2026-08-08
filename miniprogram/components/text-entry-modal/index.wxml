@@ -27,7 +27,7 @@
       <button
         class="modal-confirm"
         size="mini"
-        style="color: {{confirmColor}}"
+        style="background: {{confirmColor}}; color: #ffffff"
         disabled="{{!canConfirm}}"
         bindtap="handleConfirm"
       >

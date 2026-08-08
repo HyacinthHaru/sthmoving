@@ -1,3 +1,7 @@
+.heading {
+  margin-bottom: 32rpx;
+}
+
 .title {
   margin-bottom: 8rpx;
   font-size: 44rpx;
@@ -18,9 +22,12 @@
 }
 
 .member-name {
+  overflow: hidden;
   min-width: 0;
   font-size: 32rpx;
   font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .role {
@@ -34,8 +41,8 @@
 
 .role-OWNER,
 .role-MANAGER {
-  background: #ccfbf1;
-  color: #0f766e;
+  background: var(--brand-soft-color, #e8eef6);
+  color: var(--brand-color, #17365d);
 }
 
 .meta {
@@ -46,33 +53,32 @@
 .actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 16rpx;
   margin-top: 24rpx;
 }
 
-.actions + .actions {
-  margin-top: 16rpx;
-}
-
 .actions button {
   box-sizing: border-box;
-  flex: 1;
+  flex: 1 1 220rpx;
   min-width: 0;
-  min-height: 72rpx;
+  height: 76rpx;
   margin: 0;
-  padding: 0 24rpx;
-  border-radius: 16rpx;
-  line-height: 72rpx;
+  padding: 0 20rpx;
+  border-radius: 14rpx;
+  font-size: 27rpx;
+  line-height: 76rpx;
 }
 
 .secondary-button {
-  border: 1rpx solid #0f766e;
-  color: #0f766e;
+  border: 1rpx solid var(--brand-color, #17365d);
+  color: var(--brand-color, #17365d);
 }
 
 .danger-button {
-  background: #b91c1c;
-  color: #ffffff;
+  border: 1rpx solid #b91c1c;
+  background: #fff7f7;
+  color: #b91c1c;
 }
 
 .state {
@@ -88,7 +94,7 @@
 
 .setup-notice {
   margin-bottom: 24rpx;
-  border-left: 8rpx solid #0f766e;
-  color: #0f766e;
+  border-left: 8rpx solid var(--brand-color, #17365d);
+  color: var(--brand-color, #17365d);
   line-height: 1.6;
 }

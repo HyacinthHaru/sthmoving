@@ -2,6 +2,22 @@ export type UserRole = 'OWNER' | 'MANAGER' | 'ADMIN' | 'MEMBER'
 
 export type UserStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'DISABLED'
 
+export type UserGender = 'UNKNOWN' | 'FEMALE' | 'MALE'
+
+export type UserTheme =
+  | 'NAVY'
+  | 'TEAL'
+  | 'BLUE'
+  | 'PURPLE'
+  | 'FOREST'
+  | 'WINE'
+  | 'SLATE'
+  | 'COFFEE'
+  | 'ROSE'
+  | 'INDIGO'
+  | 'OLIVE'
+  | 'RUST'
+
 export type JoinRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 
 export type AccessState =
@@ -16,8 +32,11 @@ export interface UserRecord {
   openid: string
   display_name: string
   avatar_url?: string
+  gender?: UserGender
+  theme?: UserTheme
   role: UserRole
   status: UserStatus
+  joined_at?: string
   reviewed_by?: string
   reviewed_at?: string
   created_at: string
@@ -42,8 +61,11 @@ export interface PublicUser {
   id: string
   displayName: string
   avatarUrl?: string
+  gender: UserGender
+  theme: UserTheme
   role: UserRole
   status: UserStatus
+  joinedAt?: string
   createdAt: string
   updatedAt: string
 }

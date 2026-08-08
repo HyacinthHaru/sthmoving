@@ -38,7 +38,6 @@ const excludedDirectories = new Set([
   'dist',
   'miniprogram_npm',
   'node_modules',
-  'ysu-net-watch-tests',
 ])
 const excludedFiles = new Set([
   'private.config.json',

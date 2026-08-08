@@ -7,6 +7,13 @@
   width: 100%;
 }
 
+.brand-mark {
+  width: 36rpx;
+  height: 8rpx;
+  margin-bottom: 24rpx;
+  background: var(--brand-color, #17365d);
+}
+
 .title {
   margin-bottom: 16rpx;
   font-size: 52rpx;
@@ -15,6 +22,12 @@
 
 .description {
   margin-bottom: 48rpx;
+}
+
+.login-button {
+  min-height: 88rpx;
+  margin: 0;
+  line-height: 88rpx;
 }
 
 .error {

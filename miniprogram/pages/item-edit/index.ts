@@ -1,3 +1,4 @@
+import { getPageThemeStyle } from '../../services/theme'
 import { ApiClientError } from '../../services/cloud-api'
 import {
   MAX_ITEM_IMAGES,
@@ -65,6 +66,7 @@ interface ConflictState {
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     itemId: '',
     item: null as ItemDetail | null,
     name: '',

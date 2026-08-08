@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page" style="{{themeStyle}}">
   <view class="heading">
     <view class="title">分类管理</view>
     <view class="muted">
@@ -29,7 +29,7 @@
   </view>
 
   <view class="section-title">现有分类（{{categories.length}}）</view>
-  <view wx:if="{{loading && !categories.length}}" class="muted empty">
+  <view wx:if="{{loading && !categories.length}}" class="card muted empty">
     正在加载…
   </view>
   <view wx:elif="{{!categories.length}}" class="card empty">
@@ -55,6 +55,7 @@
     </view>
     <view wx:if="{{!item.isPreset}}" class="category-actions">
       <button
+        class="rename-button"
         data-id="{{item.id}}"
         disabled="{{processingId}}"
         bindtap="handleRename"

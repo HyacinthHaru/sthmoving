@@ -1,3 +1,4 @@
+import { getPageThemeStyle, getThemeColor } from '../../services/theme'
 import { listItems } from '../../services/items'
 import { validateCommitSummary } from '../../domain/validation'
 import {
@@ -19,6 +20,7 @@ let requestSequence = 0
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     keyword: '',
     items: [] as OffShelfItemView[],
     nextCursor: null as ItemListCursor | null,
@@ -167,7 +169,7 @@ Page({
           : `批量重新入库（${selectedItems.length} 件）`,
       placeholder: '请输入入库操作梗概（非空，最多 250 字）',
       confirmText: '确认入库',
-      confirmColor: '#0f766e',
+      confirmColor: getThemeColor(),
     })
     if (commitSummary === null) {
       return

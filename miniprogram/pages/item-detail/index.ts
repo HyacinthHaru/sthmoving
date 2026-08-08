@@ -1,3 +1,4 @@
+import { getPageThemeStyle, getThemeColor } from '../../services/theme'
 import { getItemDetail } from '../../services/items'
 import { resolveItemLabel } from '../../services/labels'
 import { login } from '../../services/auth'
@@ -24,6 +25,7 @@ interface ItemDetailView extends ItemDetail {
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     statusBarHeight: 0,
     itemId: '',
     scene: '',
@@ -191,7 +193,7 @@ Page({
       title: '同意离库申请',
       content: '确认同意该物品离库吗？',
       confirmText: '同意',
-      confirmColor: '#0f766e',
+      confirmColor: getThemeColor(),
     })
     if (!confirmation.confirm) {
       return
@@ -263,7 +265,7 @@ Page({
       title: '重新入库',
       placeholder: '请输入入库操作梗概（非空，最多250字）',
       confirmText: '确认入库',
-      confirmColor: '#0f766e',
+      confirmColor: getThemeColor(),
       maxLength: 250,
     })
     if (summary === null) {

@@ -1,3 +1,4 @@
+import { getPageThemeStyle } from '../../services/theme'
 import {
   login,
   submitJoinRequest,
@@ -37,6 +38,7 @@ const stateContent: Record<
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     title: '正在检查身份',
     description: '',
     displayName: '',

@@ -9,7 +9,13 @@
 }
 
 .log-card {
+  position: relative;
   margin-bottom: 20rpx;
+  border-left: 6rpx solid var(--brand-color, #17365d);
+}
+
+.log-card.rejected {
+  border-left-color: #b91c1c;
 }
 
 .log-heading {
@@ -29,7 +35,7 @@
 }
 
 .log-version {
-  color: #0f766e;
+  color: var(--brand-color, #17365d);
   font-size: 24rpx;
 }
 
@@ -41,6 +47,9 @@
 
 .log-summary {
   margin-top: 20rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 12rpx;
+  background: #f8fafc;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-all;

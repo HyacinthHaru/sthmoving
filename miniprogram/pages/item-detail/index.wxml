@@ -1,24 +1,19 @@
 <view
   class="detail-navigation"
-  style="padding-top: {{statusBarHeight}}px;"
+  style="padding-top: {{statusBarHeight}}px; {{themeStyle}}"
 >
   <view class="detail-navigation-row">
-    <view class="nav-back-button" bindtap="handleGoBack">
-      <view class="nav-back-arrow"></view>
+    <view class="nav-back-button" bindtap="handleGoBack" hover-class="nav-icon-button-active">
+      <image class="nav-back-icon" src="/assets/icons/arrow-left-nav.svg" mode="aspectFit" />
     </view>
-    <view class="nav-home-button" bindtap="handleGoHome">
-      <view class="nav-home-icon">
-        <view class="nav-home-roof nav-home-roof-left"></view>
-        <view class="nav-home-roof nav-home-roof-right"></view>
-        <view class="nav-home-body"></view>
-        <view class="nav-home-door"></view>
-      </view>
+    <view class="nav-home-button" bindtap="handleGoHome" hover-class="nav-icon-button-active">
+      <image class="nav-home-icon" src="/assets/icons/home-nav.svg" mode="aspectFit" />
     </view>
     <text class="nav-title">物品详情</text>
   </view>
 </view>
 
-<view class="page">
+<view class="page" style="{{themeStyle}}">
   <view wx:if="{{loading}}" class="state muted">正在加载物品详情…</view>
   <view wx:elif="{{errorMessage}}" class="card state">
     <view class="error">{{errorMessage}}</view>

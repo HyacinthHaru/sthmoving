@@ -1,3 +1,4 @@
+import { getPageThemeStyle } from '../../services/theme'
 import { listMyOutboundRequests } from '../../services/outbound'
 import type { OutboundRequest } from '../../types/domain'
 
@@ -11,6 +12,7 @@ let requestSequence = 0
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     loading: true,
     refreshing: false,
     requests: [] as ApplicationView[],

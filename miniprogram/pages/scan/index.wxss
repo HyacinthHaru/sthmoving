@@ -9,18 +9,20 @@
   text-align: center;
 }
 
-.scan-icon {
+.scan-icon-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 150rpx;
-  height: 150rpx;
+  width: 144rpx;
+  height: 144rpx;
   margin: 0 auto 32rpx;
-  border: 6rpx solid #0f766e;
-  border-radius: 32rpx;
-  color: #0f766e;
-  font-size: 88rpx;
-  line-height: 1;
+  border-radius: 28rpx;
+  background: var(--brand-soft-color, #e8eef6);
+}
+
+.scan-icon {
+  width: 70rpx;
+  height: 70rpx;
 }
 
 .scan-hint {
@@ -29,7 +31,9 @@
 }
 
 .scan-button {
-  margin-top: 40rpx;
+  min-height: 88rpx;
+  margin: 40rpx 0 0;
+  line-height: 88rpx;
 }
 
 .error {

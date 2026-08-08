@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page" style="{{themeStyle}}">
   <view class="heading">
     <view class="title">登记物品</view>
     <view class="muted">填写物品信息并上传最多两张照片</view>

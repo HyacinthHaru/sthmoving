@@ -1,3 +1,4 @@
+import { getPageThemeStyle } from '../../services/theme'
 import { listItemLogs } from '../../services/items'
 import type { ItemOperationLog } from '../../types/domain'
 
@@ -9,6 +10,7 @@ interface ItemOperationLogView extends ItemOperationLog {
 
 Page({
   data: {
+    themeStyle: getPageThemeStyle(),
     itemId: '',
     logs: [] as ItemOperationLogView[],
     loading: true,

@@ -1,3 +1,4 @@
+import { getThemeColor } from '../../services/theme'
 import type { TextEntryModalOptions } from './types'
 
 type ResolveTextEntry = (value: string | null) => void
@@ -11,7 +12,7 @@ Component({
     inputValue: '',
     placeholder: '',
     confirmText: '确定',
-    confirmColor: '#0f766e',
+    confirmColor: getThemeColor(),
     maxLength: 250,
     allowEmpty: false,
     canConfirm: false,
@@ -32,7 +33,7 @@ Component({
           inputValue: value,
           placeholder: options.placeholder ?? '请输入内容',
           confirmText: options.confirmText ?? '确定',
-          confirmColor: options.confirmColor ?? '#0f766e',
+          confirmColor: options.confirmColor ?? getThemeColor(),
           maxLength: options.maxLength ?? 250,
           allowEmpty: options.allowEmpty ?? false,
           canConfirm: options.allowEmpty ?? Boolean(value.trim()),

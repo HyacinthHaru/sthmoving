@@ -1,10 +1,12 @@
-<view class="page scan-page">
+<view class="page scan-page" style="{{themeStyle}}">
   <view class="heading">
     <view class="title">扫码查询</view>
-    <view class="muted">扫描物品小程序码或条形码，打开对应物品</view>
+    <view class="muted">扫描物品标签上的微信小程序码</view>
   </view>
   <view class="card scan-card">
-    <view class="scan-icon">⌕</view>
+    <view class="scan-icon-wrap">
+      <image class="scan-icon" src="/assets/icons/scan.svg" mode="aspectFit" />
+    </view>
     <view class="scan-hint">将标签放入取景框内</view>
     <button
       class="primary-button scan-button"
