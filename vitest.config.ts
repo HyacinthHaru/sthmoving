@@ -6,6 +6,8 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     coverage: {
       reporter: ['text', 'html'],
+      include: ['cloudfunctions/api/src/**/*.ts', 'miniprogram/**/*.ts'],
+      exclude: ['miniprogram/vendor/**', '**/types.ts', '**/*.d.ts'],
     },
   },
 })
