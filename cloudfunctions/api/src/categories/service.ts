@@ -151,18 +151,23 @@ export class CategoryService {
     categoryId: string,
   ): Promise<{ id: string }> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      requireCategoryManager(
-        await unitOfWork.getUserByOpenid(openid),
-        openid,
-      )
-      await getMutableCategory(unitOfWork, categoryId)
+      const user = await unitOfWork.getUserByOpenid(openid)
+      requireCategoryManager(user, openid)
+      const category = await getMutableCategory(unitOfWork, categoryId)
       if (await unitOfWork.hasItemReference(categoryId)) {
         throw new ApiException(
           'CATEGORY_IN_USE',
           '该分类已被物品使用，只能停用',
         )
       }
-      await unitOfWork.removeCategory(categoryId)
+      const now = this.now()
+      await unitOfWork.setCategory({
+        ...category,
+        status: 'DELETED',
+        deleted_by: user._id,
+        deleted_at: now,
+        updated_at: now,
+      })
       return { id: categoryId }
     })
   }
@@ -185,7 +190,6 @@ export class CategoryService {
         is_preset: true,
         sort_order: index,
         item_reference_count: 0,
-        created_by: 'SYSTEM',
         created_at: now,
         updated_at: now,
       })
@@ -281,7 +285,7 @@ function toPublicCategory(category: CategoryRecord): PublicCategory {
     name: category.name,
     status: category.status,
     isPreset: category.is_preset,
-    createdBy: category.created_by,
+    ...(category.created_by ? { createdBy: category.created_by } : {}),
     createdAt: category.created_at,
     updatedAt: category.updated_at,
   }

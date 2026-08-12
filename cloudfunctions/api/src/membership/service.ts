@@ -1,6 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto'
 
 import { ApiException } from '../errors'
+import {
+  isAvatarOwnedBy,
+  isManagedFileReference,
+} from '../storage/file-reference'
 import type {
   MembershipRepository,
   MembershipUnitOfWork,
@@ -341,7 +345,7 @@ export class MembershipService {
       requireApprovedIdentity(user, openid)
       if (
         updates.avatar_url &&
-        !updates.avatar_url.includes(`/avatars/${user._id}/`)
+        !isAvatarOwnedBy(updates.avatar_url, user._id)
       ) {
         throw new ApiException(
           'INVALID_AVATAR_URL',
@@ -605,7 +609,7 @@ function validateProfileUpdate(input: ProfileUpdateInput): Partial<UserRecord> {
   }
   if (input.avatarUrl !== undefined) {
     const avatarUrl = input.avatarUrl.trim()
-    if (!avatarUrl.startsWith('cloud://') || avatarUrl.length > 500) {
+    if (!isManagedFileReference(avatarUrl)) {
       throw new ApiException('INVALID_AVATAR_URL', '头像必须是有效的云存储文件')
     }
     updates.avatar_url = avatarUrl

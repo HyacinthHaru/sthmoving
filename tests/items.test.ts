@@ -54,7 +54,8 @@ class InMemoryItemRepository implements ItemRepository {
   }
 
   getItem(itemId: string): Promise<ItemRecord | null> {
-    return Promise.resolve(this.items.get(itemId) ?? null)
+    const item = this.items.get(itemId)
+    return Promise.resolve(item && item.status !== 'DELETED' ? item : null)
   }
 
   listOperationLogs(itemId: string): Promise<ItemOperationLogRecord[]> {
@@ -167,7 +168,8 @@ class InMemoryItemUnitOfWork implements ItemUnitOfWork {
   }
 
   getItem(itemId: string): Promise<ItemRecord | null> {
-    return Promise.resolve(this.items.get(itemId) ?? null)
+    const item = this.items.get(itemId)
+    return Promise.resolve(item && item.status !== 'DELETED' ? item : null)
   }
 
   setCategory(category: CategoryRecord): Promise<void> {

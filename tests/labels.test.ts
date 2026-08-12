@@ -50,7 +50,8 @@ class InMemoryLabelUnitOfWork implements LabelUnitOfWork {
   }
 
   getItem(itemId: string): Promise<ItemRecord | null> {
-    return Promise.resolve(this.items.get(itemId) ?? null)
+    const item = this.items.get(itemId)
+    return Promise.resolve(item && item.status !== 'DELETED' ? item : null)
   }
 
   getLabelByItemId(itemId: string): Promise<ItemLabelRecord | null> {

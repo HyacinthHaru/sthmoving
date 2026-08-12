@@ -40,8 +40,9 @@ class CloudLabelUnitOfWork implements LabelUnitOfWork {
     return this.getFirst<UserRecord>('users', { openid })
   }
 
-  getItem(itemId: string): Promise<ItemRecord | null> {
-    return this.getFirst<ItemRecord>('items', { _id: itemId })
+  async getItem(itemId: string): Promise<ItemRecord | null> {
+    const item = await this.getFirst<ItemRecord>('items', { _id: itemId })
+    return item && item.status !== 'DELETED' ? item : null
   }
 
   getLabelByItemId(itemId: string): Promise<ItemLabelRecord | null> {

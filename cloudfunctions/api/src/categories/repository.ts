@@ -9,7 +9,6 @@ export interface CategoryUnitOfWork {
   ): Promise<CategoryRecord | null>
   hasItemReference(categoryId: string): Promise<boolean>
   setCategory(category: CategoryRecord): Promise<void>
-  removeCategory(categoryId: string): Promise<void>
   listActiveCategories(): Promise<CategoryRecord[]>
   listAllCategories(): Promise<CategoryRecord[]>
 }

@@ -34,9 +34,7 @@ export class OutboundService {
       `outbound-${randomUUID()}`,
     private readonly createLogId: () => string = () =>
       `item-log-${randomUUID()}`,
-    private readonly imageStorage: OutboundImageStorage = {
-      delete: async () => undefined,
-    },
+    private readonly imageStorage: OutboundImageStorage,
   ) {}
 
   async createRequest(
@@ -592,14 +590,23 @@ export class OutboundService {
             labels.push(label)
           }
         }
+        const now = this.now()
         for (const item of items) {
-          await unitOfWork.deleteItem(item._id)
+          await unitOfWork.setItem({
+            ...item,
+            status: 'DELETED',
+            deleted_by: reviewer._id,
+            deleted_at: now,
+            updated_by: reviewer._id,
+            updated_at: now,
+            version: item.version + 1,
+          })
         }
         for (const label of labels) {
           await unitOfWork.setLabel({
             ...label,
             status: 'VOID',
-            updated_at: this.now(),
+            updated_at: now,
           })
         }
         return items

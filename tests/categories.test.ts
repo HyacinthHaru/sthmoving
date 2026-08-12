@@ -47,7 +47,10 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
   }
 
   getCategory(categoryId: string): Promise<CategoryRecord | null> {
-    return Promise.resolve(this.categories.get(categoryId) ?? null)
+    const category = this.categories.get(categoryId)
+    return Promise.resolve(
+      category && category.status !== 'DELETED' ? category : null,
+    )
   }
 
   getCategoryByNormalizedName(
@@ -55,7 +58,9 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
   ): Promise<CategoryRecord | null> {
     return Promise.resolve(
       [...this.categories.values()].find(
-        (category) => category.normalized_name === normalizedName,
+        (category) =>
+          category.normalized_name === normalizedName &&
+          category.status !== 'DELETED',
       ) ?? null,
     )
   }
@@ -69,11 +74,6 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
     return Promise.resolve()
   }
 
-  removeCategory(categoryId: string): Promise<void> {
-    this.categories.delete(categoryId)
-    return Promise.resolve()
-  }
-
   listActiveCategories(): Promise<CategoryRecord[]> {
     return Promise.resolve(
       [...this.categories.values()].filter(
@@ -83,7 +83,11 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
   }
 
   listAllCategories(): Promise<CategoryRecord[]> {
-    return Promise.resolve([...this.categories.values()])
+    return Promise.resolve(
+      [...this.categories.values()].filter(
+        (category) => category.status !== 'DELETED',
+      ),
+    )
   }
 }
 
@@ -282,7 +286,7 @@ describe('分类服务', () => {
     await expect(
       service.delete('admin-openid', unused.id),
     ).resolves.toEqual({ id: unused.id })
-    expect(repository.categories.has(unused.id)).toBe(false)
+    expect(repository.categories.get(unused.id)?.status).toBe('DELETED')
 
     const referenced = await service.create(
       'member-openid',
@@ -293,7 +297,9 @@ describe('分类服务', () => {
       service.delete('admin-openid', referenced.id),
       'CATEGORY_IN_USE',
     )
-    expect(repository.categories.has(referenced.id)).toBe(true)
+    expect(repository.categories.get(referenced.id)?.status).not.toBe(
+      'DELETED',
+    )
 
     repository.itemCategoryIds.delete(referenced.id)
     repository.categories.set(referenced.id, {
@@ -303,6 +309,14 @@ describe('分类服务', () => {
     await expect(
       service.delete('admin-openid', referenced.id),
     ).resolves.toEqual({ id: referenced.id })
+
+    await expect(
+      service.listManageable('admin-openid'),
+    ).resolves.not.toContainEqual(
+      expect.objectContaining({ id: referenced.id }),
+    )
+    const rebuilt = await service.create('member-openid', '已使用分类')
+    expect(rebuilt.id).not.toBe(referenced.id)
 
     const [preset] = await service.listManageable('admin-openid')
     await expectApiCode(

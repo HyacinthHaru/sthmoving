@@ -1,11 +1,14 @@
 import cloud from 'wx-server-sdk'
 
-import { route } from './router'
+import { createCloudDependencies } from './dependencies.cloud'
+import { createRouter } from './router'
 import type { ApiEvent } from './types'
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV as unknown as string,
 })
+
+const route = createRouter(createCloudDependencies())
 
 export async function main(event: ApiEvent) {
   const wxContext = cloud.getWXContext()

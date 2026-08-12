@@ -4,6 +4,7 @@ import {
   normalizeCategoryName,
   validateCategoryName,
 } from '../categories/service'
+import { isManagedFileReference } from '../storage/file-reference'
 import type { CategoryRecord } from '../categories/types'
 import { ApiException } from '../errors'
 import { createPendingItemLabel } from '../labels/service'
@@ -562,8 +563,7 @@ function validateCreateInput(input: CreateItemInput): CreateItemInput {
     input.images.some(
       (fileId) =>
         typeof fileId !== 'string' ||
-        !fileId.trim().startsWith('cloud://') ||
-        fileId.length > 1024,
+        !isManagedFileReference(fileId.trim()),
     )
   ) {
     throw new ApiException(
@@ -666,8 +666,7 @@ function validateUpdateInput(input: UpdateItemInput): UpdateItemInput {
       input.images.some(
         (fileId) =>
           typeof fileId !== 'string' ||
-          !fileId.trim().startsWith('cloud://') ||
-          fileId.length > 1024,
+          !isManagedFileReference(fileId.trim()),
       )
     ) {
       throw new ApiException(

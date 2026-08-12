@@ -72,8 +72,9 @@ class CloudItemUnitOfWork implements ItemUnitOfWork {
     })
   }
 
-  getItem(itemId: string): Promise<ItemRecord | null> {
-    return this.getFirst<ItemRecord>('items', { _id: itemId })
+  async getItem(itemId: string): Promise<ItemRecord | null> {
+    const item = await this.getFirst<ItemRecord>('items', { _id: itemId })
+    return item && item.status !== 'DELETED' ? item : null
   }
 
   async setCategory(category: CategoryRecord): Promise<void> {
@@ -139,8 +140,9 @@ export class CloudItemRepository implements ItemRepository {
     return this.getManyByIds<UserRecord>('users', userIds)
   }
 
-  getItem(itemId: string): Promise<ItemRecord | null> {
-    return this.getFirst<ItemRecord>('items', { _id: itemId })
+  async getItem(itemId: string): Promise<ItemRecord | null> {
+    const item = await this.getFirst<ItemRecord>('items', { _id: itemId })
+    return item && item.status !== 'DELETED' ? item : null
   }
 
   async listOperationLogs(
