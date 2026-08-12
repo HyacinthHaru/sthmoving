@@ -1,3 +1,7 @@
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
+
 import { afterAll, beforeEach, expect, it } from 'vitest'
 import type { Pool } from 'pg'
 
@@ -10,7 +14,9 @@ import type {
 import { emptyRawDataset } from '../../server/src/migration/dataset'
 import {
   applyFileRewrites,
+  findMissingFiles,
   planFileMigration,
+  registerMigratedFiles,
 } from '../../server/src/migration/files'
 import {
   countTables,
@@ -197,6 +203,39 @@ describePostgres('迁移导入', () => {
       [ownerId],
     )
     expect(user.rows[0]?.avatar_url).toMatch(/^file:\/\/avatars\//)
+  })
+
+  it('搬迁来的文件被登记为对应的图片类型', async () => {
+    const { dataset } = checkDataset(rawDataset())
+    const plan = planFileMigration(dataset)
+    const root = await mkdtemp(join(tmpdir(), 'sthmoving-migrated-'))
+    for (const file of plan.files) {
+      await mkdir(join(root, dirname(file.path)), { recursive: true })
+      await writeFile(join(root, file.path), Buffer.from([1, 2, 3, 4]))
+    }
+
+    await expect(findMissingFiles(root, plan.files)).resolves.toEqual([])
+    await importDataset(pool, applyFileRewrites(dataset, plan.rewrites))
+    await registerMigratedFiles(pool, root, plan.files, now)
+
+    const rows = await pool.query<{ path: string; content_type: string }>(
+      'SELECT path, content_type FROM files ORDER BY path',
+    )
+    expect(rows.rows).toHaveLength(3)
+    expect(
+      rows.rows.find((row) => row.path.startsWith('labels/'))?.content_type,
+    ).toBe('image/png')
+    expect(
+      rows.rows.find((row) => row.path.startsWith('items/'))?.content_type,
+    ).toBe('image/jpeg')
+  })
+
+  it('文件尚未搬迁时能提前发现', async () => {
+    const { dataset } = checkDataset(rawDataset())
+    const plan = planFileMigration(dataset)
+    const root = await mkdtemp(join(tmpdir(), 'sthmoving-empty-'))
+
+    await expect(findMissingFiles(root, plan.files)).resolves.toHaveLength(3)
   })
 
   it('数量不符时报告差异', async () => {

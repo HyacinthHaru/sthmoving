@@ -88,7 +88,8 @@ docker compose -f docker-compose.dev.yml up
 | `OWNER_BOOTSTRAP_TOKEN` | 无 | 首位所有者初始化口令，至少 16 位 |
 
 生产部署（Dockerfile + Caddy + 微信后台配置 + 备份）见
-[自建后端部署](./docs/自建后端部署.md)。
+[自建后端部署](./docs/自建后端部署.md)，把线上流量从云开发切过来的维护窗口步骤、
+验收清单和回滚方案见 [切换到自建后端](./docs/切换到自建后端.md)。
 
 只跑数据库时使用 `docker compose -f docker-compose.test.yml up -d`，并把
 `TEST_DATABASE_URL` 指向它，`npm run test` 才会执行真实数据库用例；未配置时这些
@@ -106,10 +107,12 @@ docker compose -f docker-compose.dev.yml up
 3. `npm run migrate -- plan-files <导出目录> manifest.json` 生成云存储文件搬迁清单。
    新路径由文件 ID 的摘要推导，同一份导出反复执行结果一致。
 4. 按清单把云存储文件下载到 `STORAGE_ROOT` 下的对应路径。
-5. `DATABASE_URL=... npm run migrate -- import <导出目录>` 导入。整个导入在一个事务里用
-   主键 UPSERT 完成，可以重复执行；结束后逐表比对数量，不一致会报错退出。
+5. `DATABASE_URL=... STORAGE_ROOT=... npm run migrate -- import <导出目录>` 导入。
+   它先确认清单里的文件都已到位，缺一个就终止；随后在一个事务里用主键 UPSERT 写入
+   全部记录，逐表比对数量，最后按实际文件大小登记 `files` 表。整个过程可以重复执行。
 
-导入会把记录里的 `cloud://` 引用重写成 `file://`，与第 3 步的清单一一对应。
+导入会把记录里的 `cloud://` 引用重写成 `file://`，与第 3 步的清单一一对应。`files` 表
+决定图片以什么 Content-Type 返回，跳过第 4 步会导致导入失败而不是悄悄给出坏图片。
 
 `scripts/backup.sh <备份目录>` 打包数据库与文件卷，`scripts/restore.sh <备份目录>` 反向恢复；
 恢复会覆盖现有数据，默认需要交互确认，`FORCE=yes` 可跳过。

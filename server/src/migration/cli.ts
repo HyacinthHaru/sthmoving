@@ -1,4 +1,5 @@
 import { writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 
 import { requireEnv } from '../config'
 import { migrate } from '../db/migrate'
@@ -6,7 +7,12 @@ import { createPool } from '../db/pool'
 import { checkDataset } from './check'
 import type { MigrationProblem } from './dataset'
 import { countDataset, readRawDataset } from './dataset'
-import { applyFileRewrites, planFileMigration } from './files'
+import {
+  applyFileRewrites,
+  findMissingFiles,
+  planFileMigration,
+  registerMigratedFiles,
+} from './files'
 import { importDataset, verifyImport } from './import'
 
 const usage = `用法：
@@ -78,8 +84,22 @@ async function run(argv: readonly string[]): Promise<number> {
     }
 
     const plan = planFileMigration(dataset)
+    const storageRoot = process.env['STORAGE_ROOT'] ?? 'storage'
+    const missing = await findMissingFiles(storageRoot, plan.files)
+    if (missing.length > 0) {
+      for (const path of missing.slice(0, 20)) {
+        console.error(`缺少文件 ${join(storageRoot, path)}`)
+      }
+      console.error(
+        `${missing.length} 个文件尚未搬迁到 ${storageRoot}，已终止导入`,
+      )
+      return 1
+    }
+
     const rewritten = applyFileRewrites(dataset, plan.rewrites)
-    const pool = createPool({ connectionString: requireEnv(process.env, 'DATABASE_URL') })
+    const pool = createPool({
+      connectionString: requireEnv(process.env, 'DATABASE_URL'),
+    })
     try {
       await migrate(pool)
       await importDataset(pool, rewritten)
@@ -92,10 +112,18 @@ async function run(argv: readonly string[]): Promise<number> {
         }
         return 1
       }
+      await registerMigratedFiles(
+        pool,
+        storageRoot,
+        plan.files,
+        new Date().toISOString(),
+      )
     } finally {
       await pool.end()
     }
-    console.log(`导入完成，重写了 ${plan.rewrites.size} 个文件引用`)
+    console.log(
+      `导入完成，登记 ${plan.files.length} 个文件，重写 ${plan.rewrites.size} 个引用`,
+    )
     return 0
   }
 

@@ -1,9 +1,14 @@
 import { createHash } from 'node:crypto'
+import { stat } from 'node:fs/promises'
+import { join } from 'node:path'
+
+import type { Pool } from 'pg'
 
 import {
   parseSelfHostedPath,
   toSelfHostedReference,
 } from '../../../cloudfunctions/api/src/storage/file-reference'
+import { PostgresFileRegistry } from '../storage/files'
 import type { FilePurpose } from '../storage/storage'
 import type { MigrationDataset } from './dataset'
 
@@ -100,6 +105,57 @@ export function planFileMigration(
     ),
     skipped,
   }
+}
+
+const contentTypes: Readonly<Record<string, string>> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+}
+
+export function contentTypeOf(path: string): string {
+  const extension = /\.([a-zA-Z0-9]+)$/u.exec(path)?.[1]?.toLowerCase()
+  return (extension && contentTypes[extension]) || 'image/jpeg'
+}
+
+export async function findMissingFiles(
+  storageRoot: string,
+  files: readonly PlannedFile[],
+): Promise<string[]> {
+  const missing: string[] = []
+  for (const file of files) {
+    try {
+      const info = await stat(join(storageRoot, file.path))
+      if (!info.isFile() || info.size === 0) {
+        missing.push(file.path)
+      }
+    } catch {
+      missing.push(file.path)
+    }
+  }
+  return missing
+}
+
+export async function registerMigratedFiles(
+  pool: Pool,
+  storageRoot: string,
+  files: readonly PlannedFile[],
+  createdAt: string,
+): Promise<number> {
+  const registry = new PostgresFileRegistry(pool)
+  for (const file of files) {
+    const info = await stat(join(storageRoot, file.path))
+    await registry.record({
+      path: file.path,
+      purpose: file.purpose,
+      ownerId: file.ownerId,
+      contentType: contentTypeOf(file.path),
+      sizeBytes: info.size,
+      createdAt,
+    })
+  }
+  return files.length
 }
 
 export function applyFileRewrites(
