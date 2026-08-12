@@ -7,7 +7,6 @@ import type {
 import type { OutboundRequestRecord } from './types'
 
 export interface OutboundUnitOfWork {
-  getUserByOpenid(openid: string): Promise<UserRecord | null>
   getUser(userId: string): Promise<UserRecord | null>
   getItem(itemId: string): Promise<ItemRecord | null>
   getRequest(requestId: string): Promise<OutboundRequestRecord | null>

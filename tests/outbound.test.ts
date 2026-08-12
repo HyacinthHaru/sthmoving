@@ -71,13 +71,6 @@ class InMemoryOutboundUnitOfWork implements OutboundUnitOfWork {
     private readonly failOnLogWrite: boolean,
   ) {}
 
-  getUserByOpenid(openid: string): Promise<UserRecord | null> {
-    return Promise.resolve(
-      [...this.users.values()].find((user) => user.openid === openid) ??
-        null,
-    )
-  }
-
   getItem(itemId: string): Promise<ItemRecord | null> {
     const item = this.items.get(itemId)
     return Promise.resolve(item && item.status !== 'DELETED' ? item : null)
@@ -287,7 +280,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.createRequest('member-openid', {
+      service.createRequest('user-member', {
         itemId: 'item-1',
         reason: '物品已经损坏',
       }),
@@ -336,7 +329,7 @@ describe('离库申请服务', () => {
     })
 
     await expectApiCode(
-      service.createRequest('member-openid', {
+      service.createRequest('user-member', {
         itemId: 'item-1',
         reason: '再次申请离库',
       }),
@@ -348,21 +341,21 @@ describe('离库申请服务', () => {
       createItem('OFF_SHELF'),
     )
     await expectApiCode(
-      service.createRequest('member-openid', {
+      service.createRequest('user-member', {
         itemId: 'item-1',
         reason: '申请已经离库的物品',
       }),
       'ITEM_NOT_REQUESTABLE',
     )
     await expectApiCode(
-      service.createRequest('member-openid', {
+      service.createRequest('user-member', {
         itemId: 'item-1',
         reason: '   ',
       }),
       'INVALID_OUTBOUND_REASON',
     )
     await expectApiCode(
-      service.createRequest('member-openid', {
+      service.createRequest('user-member', {
         itemId: 'item-1',
         reason: '字'.repeat(251),
       }),
@@ -376,7 +369,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.createRequest('member-openid', {
+      service.createRequest('user-member', {
         itemId: 'item-1',
         reason: '物品已经损坏',
       }),
@@ -395,7 +388,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expectApiCode(
-      service.createRequest('member-openid', {
+      service.createRequest('user-member', {
         itemId: 'item-1',
         reason: '物品已经损坏',
       }),
@@ -422,7 +415,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.approveRequest('admin-openid', {
+      service.approveRequest('user-admin', {
         requestId: 'outbound-1',
       }),
     ).resolves.toMatchObject({ id: 'outbound-1', status: 'APPROVED' })
@@ -481,7 +474,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.listPendingRequests('admin-openid'),
+      service.listPendingRequests('user-admin'),
     ).resolves.toEqual([
       expect.objectContaining({
         id: 'outbound-1',
@@ -514,7 +507,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.listMyRequests('member-openid'),
+      service.listMyRequests('user-member'),
     ).resolves.toEqual([
       {
         id: 'outbound-1',
@@ -557,7 +550,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.rejectRequest('admin-openid', {
+      service.rejectRequest('user-admin', {
         requestId: 'outbound-1',
         reviewSummary: '拒绝：物品仍需保留',
       }),
@@ -581,7 +574,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.directOutbound('admin-openid', {
+      service.directOutbound('user-admin', {
         itemId: 'item-1',
         expectedVersion: 3,
         commitSummary: '管理员直接处理离库',
@@ -610,7 +603,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.restoreInbound('admin-openid', {
+      service.restoreInbound('user-admin', {
         itemId: 'item-1',
         expectedVersion: 3,
         commitSummary: '确认物品误操作离库，恢复入库',
@@ -645,7 +638,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expectApiCode(
-      service.restoreInbound('member-openid', {
+      service.restoreInbound('user-member', {
         itemId: 'item-1',
         expectedVersion: 3,
         commitSummary: '成员尝试恢复入库',
@@ -654,7 +647,7 @@ describe('离库申请服务', () => {
     )
     addAdmin(repository)
     await expectApiCode(
-      service.restoreInbound('admin-openid', {
+      service.restoreInbound('user-admin', {
         itemId: 'item-1',
         expectedVersion: 3,
         commitSummary: '恢复入库测试',
@@ -664,7 +657,7 @@ describe('离库申请服务', () => {
     repository.items.set('item-1', createItem('OFF_SHELF'))
     repository.labels.set('label-1', createLabel('VOID'))
     await expectApiCode(
-      service.restoreInbound('admin-openid', {
+      service.restoreInbound('user-admin', {
         itemId: 'item-1',
         expectedVersion: 2,
         commitSummary: '恢复入库测试',
@@ -689,7 +682,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.batchRestoreInbound('admin-openid', {
+      service.batchRestoreInbound('user-admin', {
         items: [
           { itemId: 'item-1', expectedVersion: 3 },
           { itemId: 'item-2', expectedVersion: 2 },
@@ -737,7 +730,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expectApiCode(
-      service.batchRestoreInbound('admin-openid', {
+      service.batchRestoreInbound('user-admin', {
         items: [
           { itemId: 'item-1', expectedVersion: 3 },
           { itemId: 'item-2', expectedVersion: 1 },
@@ -769,7 +762,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.batchDirectOutbound('admin-openid', {
+      service.batchDirectOutbound('user-admin', {
         items: [
           { itemId: 'item-1', expectedVersion: 3 },
           { itemId: 'item-2', expectedVersion: 2 },
@@ -809,7 +802,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expectApiCode(
-      service.batchDirectOutbound('admin-openid', {
+      service.batchDirectOutbound('user-admin', {
         items: [
           { itemId: 'item-1', expectedVersion: 3 },
           { itemId: 'item-2', expectedVersion: 1 },
@@ -859,7 +852,7 @@ describe('离库申请服务', () => {
     const service = createService(repository, storage)
 
     await expect(
-      service.deleteItems('admin-openid', { itemIds: ['item-1'] }),
+      service.deleteItems('user-admin', { itemIds: ['item-1'] }),
     ).resolves.toEqual({
       itemIds: ['item-1'],
       deletedImageCount: 1,
@@ -875,11 +868,11 @@ describe('离库申请服务', () => {
     expect(storage.deleted).toEqual(['cloud://env/items/table.jpg'])
 
     await expectApiCode(
-      service.deleteItems('admin-openid', { itemIds: ['item-1'] }),
+      service.deleteItems('user-admin', { itemIds: ['item-1'] }),
       'ITEM_NOT_FOUND',
     )
     await expectApiCode(
-      service.restoreInbound('admin-openid', {
+      service.restoreInbound('user-admin', {
         itemId: 'item-1',
         expectedVersion: 5,
         commitSummary: '尝试恢复已删除物品',
@@ -887,7 +880,7 @@ describe('离库申请服务', () => {
       'ITEM_NOT_FOUND',
     )
     await expect(
-      service.listMyRequests('member-openid'),
+      service.listMyRequests('user-member'),
     ).resolves.toEqual([expect.objectContaining({ item: null })])
   })
 
@@ -896,12 +889,12 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expectApiCode(
-      service.deleteItems('member-openid', { itemIds: ['item-1'] }),
+      service.deleteItems('user-member', { itemIds: ['item-1'] }),
       'FORBIDDEN',
     )
     addAdmin(repository)
     await expectApiCode(
-      service.deleteItems('admin-openid', { itemIds: ['item-1'] }),
+      service.deleteItems('user-admin', { itemIds: ['item-1'] }),
       'ITEM_NOT_DELETABLE',
     )
     expect(repository.items.get('item-1')?.status).not.toBe('DELETED')
@@ -912,7 +905,7 @@ describe('离库申请服务', () => {
     const service = createService(repository)
 
     await expectApiCode(
-      service.listPendingRequests('member-openid'),
+      service.listPendingRequests('user-member'),
       'FORBIDDEN',
     )
   })

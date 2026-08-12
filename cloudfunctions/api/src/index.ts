@@ -1,6 +1,7 @@
 import cloud from 'wx-server-sdk'
 
 import { createCloudDependencies } from './dependencies.cloud'
+import { deriveUserId } from './identity'
 import { createRouter } from './router'
 import type { ApiEvent } from './types'
 
@@ -22,6 +23,7 @@ export async function main(event: ApiEvent) {
     }
   }
   return route(event, {
+    userId: deriveUserId(wxContext.OPENID),
     openid: wxContext.OPENID,
   })
 }

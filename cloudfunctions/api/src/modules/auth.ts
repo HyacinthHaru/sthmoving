@@ -16,7 +16,7 @@ export function createAuthHandlers(
 ): Readonly<Record<string, ApiHandler>> {
   return {
     login: async (_payload, context) =>
-      createService(deps).login(context.openid),
+      createService(deps).login(context.userId, context.openid),
 
     bootstrapOwner: async (payload, context) => {
       const configuredToken = process.env['OWNER_BOOTSTRAP_TOKEN']
@@ -32,7 +32,7 @@ export function createAuthHandlers(
           '所有者初始化口令无效或未配置',
         )
       }
-      return createService(deps).bootstrapOwner(context.openid)
+      return createService(deps).bootstrapOwner(context.userId, context.openid)
     },
   }
 }

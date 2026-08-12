@@ -42,10 +42,6 @@ interface TransactionDatabase {
 class CloudOutboundUnitOfWork implements OutboundUnitOfWork {
   constructor(private readonly database: TransactionDatabase) {}
 
-  getUserByOpenid(openid: string): Promise<UserRecord | null> {
-    return this.getFirst<UserRecord>('users', { openid })
-  }
-
   getUser(userId: string): Promise<UserRecord | null> {
     return this.getFirst<UserRecord>('users', { _id: userId })
   }

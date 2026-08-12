@@ -20,9 +20,9 @@ export function createLabelHandlers(
 ): Readonly<Record<string, ApiHandler>> {
   return {
     get: async (payload, context) =>
-      createService(deps).get(context.openid, getItemId(payload)),
+      createService(deps).get(context.userId, getItemId(payload)),
     generateMiniProgramCode: async (payload, context) =>
-      createService(deps).generate(context.openid, getItemId(payload)),
+      createService(deps).generate(context.userId, getItemId(payload)),
     resolve: async (payload, context) => {
       const scene = (payload as { scene?: unknown } | undefined)?.scene
       if (typeof scene !== 'string') {
@@ -31,7 +31,7 @@ export function createLabelHandlers(
           '标签解析请求字段无效',
         )
       }
-      return createService(deps).resolve(context.openid, scene)
+      return createService(deps).resolve(context.userId, scene)
     },
   }
 }

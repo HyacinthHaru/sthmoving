@@ -112,7 +112,7 @@ export function createMembershipHandlers(
   return {
     updateProfile: async (payload, context) =>
       createService(deps).updateProfile(
-        context.openid,
+        context.userId,
         parseProfileUpdate(payload),
       ),
 
@@ -130,6 +130,7 @@ export function createMembershipHandlers(
         throw new ApiException('INVALID_REQUESTED_ROLE', '申请角色只能是普通成员或管理员')
       }
       return createService(deps).submitJoinRequest(
+        context.userId,
         context.openid,
         displayName,
         requestedRole,
@@ -137,23 +138,23 @@ export function createMembershipHandlers(
     },
 
     listPendingJoinRequests: async (_payload, context) =>
-      createService(deps).listPendingJoinRequests(context.openid),
+      createService(deps).listPendingJoinRequests(context.userId),
 
     reviewJoinRequest: async (payload, context) =>
       createService(deps).reviewJoinRequest(
-        context.openid,
+        context.userId,
         parseReviewInput(payload),
       ),
 
     listMembers: async (_payload, context) =>
-      createService(deps).listMembers(context.openid),
+      createService(deps).listMembers(context.userId),
 
     disableMember: async (payload, context) => {
       const userId = (payload as UserIdPayload | undefined)?.userId
       if (typeof userId !== 'string') {
         throw new ApiException('INVALID_USER_ID', '成员 ID 无效')
       }
-      return createService(deps).disableMember(context.openid, userId)
+      return createService(deps).disableMember(context.userId, userId)
     },
 
     setAdminRole: async (payload, context) => {
@@ -164,7 +165,7 @@ export function createMembershipHandlers(
       ) {
         throw new ApiException('INVALID_ROLE', '角色调整请求无效')
       }
-      return createService(deps).setAdminRole(context.openid, {
+      return createService(deps).setAdminRole(context.userId, {
         userId: input.userId,
         role: input.role,
       })
@@ -175,7 +176,7 @@ export function createMembershipHandlers(
       if (typeof userId !== 'string') {
         throw new ApiException('INVALID_USER_ID', '成员 ID 无效')
       }
-      return createService(deps).appointManager(context.openid, userId)
+      return createService(deps).appointManager(context.userId, userId)
     },
 
     removeManager: async (payload, context) => {
@@ -183,7 +184,7 @@ export function createMembershipHandlers(
       if (typeof userId !== 'string') {
         throw new ApiException('INVALID_USER_ID', '成员 ID 无效')
       }
-      return createService(deps).removeManager(context.openid, userId)
+      return createService(deps).removeManager(context.userId, userId)
     },
 
     transferManager: async (payload, context) => {
@@ -195,7 +196,7 @@ export function createMembershipHandlers(
       ) {
         throw new ApiException('INVALID_USER_ID', '实际管理者交接请求无效')
       }
-      return createService(deps).transferManager(context.openid, {
+      return createService(deps).transferManager(context.userId, {
         targetUserId: input.userId,
         ...(typeof input.sourceManagerId === 'string'
           ? { sourceManagerId: input.sourceManagerId }

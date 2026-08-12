@@ -71,7 +71,7 @@ export function createItemHandlers(
           '物品查询请求字段无效',
         )
       }
-      return createService(deps).list(context.openid, {
+      return createService(deps).list(context.userId, {
         ...(typeof input?.keyword === 'string'
           ? { keyword: input.keyword }
           : {}),
@@ -98,7 +98,7 @@ export function createItemHandlers(
           '物品详情请求字段无效',
         )
       }
-      return createService(deps).detail(context.openid, itemId)
+      return createService(deps).detail(context.userId, itemId)
     },
     logs: async (payload, context) => {
       const itemId = (payload as { itemId?: unknown } | undefined)?.itemId
@@ -108,7 +108,7 @@ export function createItemHandlers(
           '物品操作日志请求字段无效',
         )
       }
-      return createService(deps).logs(context.openid, itemId)
+      return createService(deps).logs(context.userId, itemId)
     },
     update: async (payload, context) => {
       const input = payload as UpdateItemPayload | undefined
@@ -132,7 +132,7 @@ export function createItemHandlers(
         )
       }
 
-      return createService(deps).update(context.openid, {
+      return createService(deps).update(context.userId, {
         itemId: input.itemId,
         expectedVersion: input.expectedVersion,
         ...(input.name !== undefined ? { name: input.name } : {}),
@@ -187,7 +187,7 @@ export function createItemHandlers(
         typeof input.categoryId === 'string'
           ? { categoryId: input.categoryId }
           : { newCategoryName: input.newCategoryName as string }
-      return createService(deps).create(context.openid, {
+      return createService(deps).create(context.userId, {
         name: input.name,
         images: input.images ?? [],
         description: input.description ?? '',

@@ -21,10 +21,10 @@ export function createCategoryHandlers(
   deps: ApiDependencies,
 ): Readonly<Record<string, ApiHandler>> {
   return {
-    list: async (_payload, context) => createService(deps).list(context.openid),
+    list: async (_payload, context) => createService(deps).list(context.userId),
 
     listManageable: async (_payload, context) =>
-      createService(deps).listManageable(context.openid),
+      createService(deps).listManageable(context.userId),
 
     create: async (payload, context) => {
       const name = (payload as CreatePayload | undefined)?.name
@@ -34,7 +34,7 @@ export function createCategoryHandlers(
           '分类名称必须是字符串',
         )
       }
-      return createService(deps).create(context.openid, name)
+      return createService(deps).create(context.userId, name)
     },
 
     rename: async (payload, context) => {
@@ -49,7 +49,7 @@ export function createCategoryHandlers(
         )
       }
       return createService(deps).rename(
-        context.openid,
+        context.userId,
         input.categoryId,
         input.name,
       )
@@ -64,7 +64,7 @@ export function createCategoryHandlers(
         throw new ApiException('INVALID_REQUEST', '分类状态请求无效')
       }
       return createService(deps).setStatus(
-        context.openid,
+        context.userId,
         input.categoryId,
         input.status,
       )
@@ -75,7 +75,7 @@ export function createCategoryHandlers(
       if (typeof categoryId !== 'string') {
         throw new ApiException('INVALID_REQUEST', '分类 ID 必须是字符串')
       }
-      return createService(deps).delete(context.openid, categoryId)
+      return createService(deps).delete(context.userId, categoryId)
     },
   }
 }

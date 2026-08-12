@@ -163,8 +163,8 @@ describe('成员身份服务', () => {
     const repository = new InMemoryMembershipRepository()
     const service = createService(repository)
 
-    const first = await service.login('new-user-openid')
-    const second = await service.login('new-user-openid')
+    const first = await service.login(userIdOf('new-user-openid'), 'new-user-openid')
+    const second = await service.login(userIdOf('new-user-openid'), 'new-user-openid')
 
     expect(first.accessState).toBe('UNAPPLIED')
     expect(second.user.id).toBe(first.user.id)
@@ -176,31 +176,32 @@ describe('成员身份服务', () => {
     const repository = new InMemoryMembershipRepository()
     const service = createService(repository)
 
-    await service.bootstrapOwner('owner-openid')
+    await service.bootstrapOwner(userIdOf('owner-openid'), 'owner-openid')
     const first = await service.submitJoinRequest(
+      userIdOf('member-openid'),
       'member-openid',
       '成员甲',
     )
     expect(first.accessState).toBe('PENDING')
     await expectApiCode(
-      service.submitJoinRequest('member-openid', '成员甲'),
+      service.submitJoinRequest(userIdOf('member-openid'), 'member-openid', '成员甲'),
       'JOIN_REQUEST_PENDING',
     )
 
     const [request] =
-      await service.listPendingJoinRequests('owner-openid')
+      await service.listPendingJoinRequests(userIdOf('owner-openid'))
     expect(request).toBeDefined()
-    await service.reviewJoinRequest('owner-openid', {
+    await service.reviewJoinRequest(userIdOf('owner-openid'), {
       requestId: request!.id,
       decision: 'REJECT',
       comment: '当前暂不符合加入条件',
     })
-    await expect(service.login('member-openid')).resolves.toMatchObject({
+    await expect(service.login(userIdOf('member-openid'), 'member-openid')).resolves.toMatchObject({
       accessState: 'REJECTED',
     })
 
     await expect(
-      service.submitJoinRequest('member-openid', '成员甲（再次申请）'),
+      service.submitJoinRequest(userIdOf('member-openid'), 'member-openid', '成员甲（再次申请）'),
     ).resolves.toMatchObject({ accessState: 'PENDING' })
     expect(repository.requests.size).toBe(2)
   })
@@ -209,13 +210,13 @@ describe('成员身份服务', () => {
     const repository = new InMemoryMembershipRepository()
     const service = createService(repository)
 
-    await service.bootstrapOwner('owner-openid')
-    await service.submitJoinRequest('member-openid', '成员')
-    const [request] = await service.listPendingJoinRequests('owner-openid')
+    await service.bootstrapOwner(userIdOf('owner-openid'), 'owner-openid')
+    await service.submitJoinRequest(userIdOf('member-openid'), 'member-openid', '成员')
+    const [request] = await service.listPendingJoinRequests(userIdOf('owner-openid'))
     expect(request).toBeDefined()
 
     await expectApiCode(
-      service.reviewJoinRequest('owner-openid', {
+      service.reviewJoinRequest(userIdOf('owner-openid'), {
         requestId: request!.id,
         decision: 'REJECT',
       }),
@@ -231,7 +232,7 @@ describe('成员身份服务', () => {
       status: 'DISABLED',
     })
     await expectApiCode(
-      service.reviewJoinRequest('owner-openid', {
+      service.reviewJoinRequest(userIdOf('owner-openid'), {
         requestId: request!.id,
         decision: 'APPROVE',
       }),
@@ -243,27 +244,27 @@ describe('成员身份服务', () => {
     const repository = new InMemoryMembershipRepository()
     const service = createService(repository)
 
-    const owner = await service.bootstrapOwner('owner-openid')
+    const owner = await service.bootstrapOwner(userIdOf('owner-openid'), 'owner-openid')
     expect(owner.user.role).toBe('OWNER')
-    await service.submitJoinRequest('member-openid', '成员乙')
+    await service.submitJoinRequest(userIdOf('member-openid'), 'member-openid', '成员乙')
 
     await expectApiCode(
-      service.listPendingJoinRequests('member-openid'),
+      service.listPendingJoinRequests(userIdOf('member-openid')),
       'ACCOUNT_NOT_ACTIVE',
     )
 
     const [request] =
-      await service.listPendingJoinRequests('owner-openid')
-    await service.reviewJoinRequest('owner-openid', {
+      await service.listPendingJoinRequests(userIdOf('owner-openid'))
+    await service.reviewJoinRequest(userIdOf('owner-openid'), {
       requestId: request!.id,
       decision: 'APPROVE',
     })
 
-    const member = await service.login('member-openid')
+    const member = await service.login(userIdOf('member-openid'), 'member-openid')
     expect(member.accessState).toBe('APPROVED')
     expect(member.user.role).toBe('MEMBER')
     await expectApiCode(
-      service.listPendingJoinRequests('member-openid'),
+      service.listPendingJoinRequests(userIdOf('member-openid')),
       'FORBIDDEN',
     )
   })
@@ -272,9 +273,9 @@ describe('成员身份服务', () => {
     const repository = new InMemoryMembershipRepository()
     const service = createService(repository)
 
-    await service.bootstrapOwner('first-owner-openid')
+    await service.bootstrapOwner(userIdOf('first-owner-openid'), 'first-owner-openid')
     await expectApiCode(
-      service.bootstrapOwner('second-owner-openid'),
+      service.bootstrapOwner(userIdOf('second-owner-openid'), 'second-owner-openid'),
       'OWNER_BOOTSTRAP_CLOSED',
     )
     expect(repository.users.size).toBe(1)
@@ -283,7 +284,7 @@ describe('成员身份服务', () => {
   it('停用账号不能重新申请或调用审核接口', async () => {
     const repository = new InMemoryMembershipRepository()
     const service = createService(repository)
-    const session = await service.login('disabled-openid')
+    const session = await service.login(userIdOf('disabled-openid'), 'disabled-openid')
     const user = repository.users.get(session.user.id)
     expect(user).toBeDefined()
     repository.users.set(session.user.id, {
@@ -291,15 +292,15 @@ describe('成员身份服务', () => {
       status: 'DISABLED',
     })
 
-    await expect(service.login('disabled-openid')).resolves.toMatchObject({
+    await expect(service.login(userIdOf('disabled-openid'), 'disabled-openid')).resolves.toMatchObject({
       accessState: 'DISABLED',
     })
     await expectApiCode(
-      service.submitJoinRequest('disabled-openid', '停用成员'),
+      service.submitJoinRequest(userIdOf('disabled-openid'), 'disabled-openid', '停用成员'),
       'ACCOUNT_DISABLED',
     )
     await expectApiCode(
-      service.listPendingJoinRequests('disabled-openid'),
+      service.listPendingJoinRequests(userIdOf('disabled-openid')),
       'ACCOUNT_NOT_ACTIVE',
     )
   })
@@ -307,10 +308,10 @@ describe('成员身份服务', () => {
   it('已加入成员可以更新自己的昵称、头像、性别和主题', async () => {
     const repository = new InMemoryMembershipRepository()
     const service = createService(repository)
-    const owner = await service.bootstrapOwner('owner-openid')
+    const owner = await service.bootstrapOwner(userIdOf('owner-openid'), 'owner-openid')
 
     const avatarUrl = `cloud://example-env.bucket/avatars/${owner.user.id}/owner.jpg`
-    const updated = await service.updateProfile('owner-openid', {
+    const updated = await service.updateProfile(userIdOf('owner-openid'), {
       displayName: '仓库负责人',
       avatarUrl,
       gender: 'FEMALE',
@@ -330,20 +331,20 @@ describe('成员身份服务', () => {
   it('未通过审核的账号不能更新资料，并拒绝空更新和无效字段', async () => {
     const repository = new InMemoryMembershipRepository()
     const service = createService(repository)
-    await service.login('pending-openid')
+    await service.login(userIdOf('pending-openid'), 'pending-openid')
     await expectApiCode(
-      service.updateProfile('pending-openid', { displayName: '待审核用户' }),
+      service.updateProfile(userIdOf('pending-openid'), { displayName: '待审核用户' }),
       'ACCOUNT_NOT_ACTIVE',
     )
 
-    await service.bootstrapOwner('owner-openid')
-    await expectApiCode(service.updateProfile('owner-openid', {}), 'EMPTY_PROFILE_UPDATE')
+    await service.bootstrapOwner(userIdOf('owner-openid'), 'owner-openid')
+    await expectApiCode(service.updateProfile(userIdOf('owner-openid'), {}), 'EMPTY_PROFILE_UPDATE')
     await expectApiCode(
-      service.updateProfile('owner-openid', { avatarUrl: 'https://example.com/avatar.jpg' }),
+      service.updateProfile(userIdOf('owner-openid'), { avatarUrl: 'https://example.com/avatar.jpg' }),
       'INVALID_AVATAR_URL',
     )
     await expectApiCode(
-      service.updateProfile('owner-openid', { avatarUrl: 'cloud://example-env.bucket/avatars/another-user/avatar.jpg' }),
+      service.updateProfile(userIdOf('owner-openid'), { avatarUrl: 'cloud://example-env.bucket/avatars/another-user/avatar.jpg' }),
       'INVALID_AVATAR_URL',
     )
   })
@@ -357,7 +358,7 @@ describe('成员身份服务', () => {
     const member = seedUser(repository, 'member-openid', 'MEMBER')
     const pending = seedUser(repository, 'pending-openid', 'MEMBER', 'PENDING')
 
-    const members = await service.listMembers('admin-openid')
+    const members = await service.listMembers(userIdOf('admin-openid'))
 
     expect(members.map((item) => item.id).sort()).toEqual(
       [owner._id, manager._id, admin._id, member._id, pending._id].sort(),
@@ -371,11 +372,11 @@ describe('成员身份服务', () => {
       theme: 'NAVY',
     })
 
-    await expect(service.listMembers('manager-openid')).resolves.toHaveLength(5)
-    await expect(service.listMembers('owner-openid')).resolves.toHaveLength(5)
-    await expectApiCode(service.listMembers('member-openid'), 'FORBIDDEN')
-    await expectApiCode(service.listMembers('pending-openid'), 'ACCOUNT_NOT_ACTIVE')
-    await expectApiCode(service.listMembers('unknown-openid'), 'UNAUTHENTICATED')
+    await expect(service.listMembers(userIdOf('manager-openid'))).resolves.toHaveLength(5)
+    await expect(service.listMembers(userIdOf('owner-openid'))).resolves.toHaveLength(5)
+    await expectApiCode(service.listMembers(userIdOf('member-openid')), 'FORBIDDEN')
+    await expectApiCode(service.listMembers(userIdOf('pending-openid')), 'ACCOUNT_NOT_ACTIVE')
+    await expectApiCode(service.listMembers(userIdOf('unknown-openid')), 'UNAUTHENTICATED')
   })
 
   it('管理员可以停用普通成员，但不能停用自己、所有者、实际管理者或未通过审核的成员', async () => {
@@ -387,7 +388,7 @@ describe('成员身份服务', () => {
     const member = seedUser(repository, 'member-openid', 'MEMBER')
     const pending = seedUser(repository, 'pending-openid', 'MEMBER', 'PENDING')
 
-    await expect(service.disableMember('admin-openid', member._id)).resolves.toMatchObject({
+    await expect(service.disableMember(userIdOf('admin-openid'), member._id)).resolves.toMatchObject({
       id: member._id,
       status: 'DISABLED',
       reviewedBy: admin._id,
@@ -396,40 +397,40 @@ describe('成员身份服务', () => {
     expect(repository.users.get(member._id)?.status).toBe('DISABLED')
 
     await expectApiCode(
-      service.disableMember('admin-openid', admin._id),
+      service.disableMember(userIdOf('admin-openid'), admin._id),
       'SELF_MEMBER_DISABLE_FORBIDDEN',
     )
     await expectApiCode(
-      service.disableMember('owner-openid', owner._id),
+      service.disableMember(userIdOf('owner-openid'), owner._id),
       'SELF_MEMBER_DISABLE_FORBIDDEN',
     )
     await expectApiCode(
-      service.disableMember('admin-openid', owner._id),
+      service.disableMember(userIdOf('admin-openid'), owner._id),
       'ROLE_CHANGE_FORBIDDEN',
     )
     await expectApiCode(
-      service.disableMember('admin-openid', manager._id),
+      service.disableMember(userIdOf('admin-openid'), manager._id),
       'ROLE_CHANGE_FORBIDDEN',
     )
     await expectApiCode(
-      service.disableMember('owner-openid', manager._id),
+      service.disableMember(userIdOf('owner-openid'), manager._id),
       'ROLE_CHANGE_FORBIDDEN',
     )
     await expectApiCode(
-      service.disableMember('admin-openid', pending._id),
+      service.disableMember(userIdOf('admin-openid'), pending._id),
       'MEMBER_STATUS_INVALID',
     )
     await expectApiCode(
-      service.disableMember('admin-openid', member._id),
+      service.disableMember(userIdOf('admin-openid'), member._id),
       'MEMBER_STATUS_INVALID',
     )
     await expectApiCode(
-      service.disableMember('admin-openid', 'missing-user'),
+      service.disableMember(userIdOf('admin-openid'), 'missing-user'),
       'USER_NOT_FOUND',
     )
-    await expectApiCode(service.disableMember('admin-openid', '  '), 'INVALID_USER_ID')
+    await expectApiCode(service.disableMember(userIdOf('admin-openid'), '  '), 'INVALID_USER_ID')
     await expectApiCode(
-      service.disableMember('member-openid', pending._id),
+      service.disableMember(userIdOf('member-openid'), pending._id),
       'ACCOUNT_NOT_ACTIVE',
     )
   })
@@ -445,23 +446,23 @@ describe('成员身份服务', () => {
     const ownerTarget = seedUser(repository, 'owner-target-openid', 'ADMIN')
 
     await expectApiCode(
-      service.disableMember('admin-openid', managerTarget._id),
+      service.disableMember(userIdOf('admin-openid'), managerTarget._id),
       'FORBIDDEN',
     )
     await expectApiCode(
-      service.disableMember('member-openid', managerTarget._id),
+      service.disableMember(userIdOf('member-openid'), managerTarget._id),
       'FORBIDDEN',
     )
 
     await expect(
-      service.disableMember('manager-openid', managerTarget._id),
+      service.disableMember(userIdOf('manager-openid'), managerTarget._id),
     ).resolves.toMatchObject({
       id: managerTarget._id,
       status: 'DISABLED',
       reviewedBy: manager._id,
     })
     await expect(
-      service.disableMember('owner-openid', ownerTarget._id),
+      service.disableMember(userIdOf('owner-openid'), ownerTarget._id),
     ).resolves.toMatchObject({
       id: ownerTarget._id,
       status: 'DISABLED',
@@ -481,7 +482,7 @@ describe('成员身份服务', () => {
     const disabled = seedUser(repository, 'disabled-openid', 'MEMBER', 'DISABLED')
 
     await expect(
-      service.setAdminRole('manager-openid', { userId: member._id, role: 'ADMIN' }),
+      service.setAdminRole(userIdOf('manager-openid'), { userId: member._id, role: 'ADMIN' }),
     ).resolves.toMatchObject({
       id: member._id,
       role: 'ADMIN',
@@ -489,7 +490,7 @@ describe('成员身份服务', () => {
       reviewedAt: '2026-07-29T13:00:00.000Z',
     })
     await expect(
-      service.setAdminRole('owner-openid', { userId: admin._id, role: 'MEMBER' }),
+      service.setAdminRole(userIdOf('owner-openid'), { userId: admin._id, role: 'MEMBER' }),
     ).resolves.toMatchObject({
       id: admin._id,
       role: 'MEMBER',
@@ -499,35 +500,35 @@ describe('成员身份服务', () => {
     expect(repository.users.get(admin._id)?.role).toBe('MEMBER')
 
     await expectApiCode(
-      service.setAdminRole('other-admin-openid', { userId: member._id, role: 'MEMBER' }),
+      service.setAdminRole(userIdOf('other-admin-openid'), { userId: member._id, role: 'MEMBER' }),
       'FORBIDDEN',
     )
     await expectApiCode(
-      service.setAdminRole('owner-openid', { userId: owner._id, role: 'ADMIN' }),
+      service.setAdminRole(userIdOf('owner-openid'), { userId: owner._id, role: 'ADMIN' }),
       'ROLE_CHANGE_FORBIDDEN',
     )
     await expectApiCode(
-      service.setAdminRole('owner-openid', { userId: manager._id, role: 'ADMIN' }),
+      service.setAdminRole(userIdOf('owner-openid'), { userId: manager._id, role: 'ADMIN' }),
       'ROLE_CHANGE_FORBIDDEN',
     )
     await expectApiCode(
-      service.setAdminRole('owner-openid', { userId: pending._id, role: 'ADMIN' }),
+      service.setAdminRole(userIdOf('owner-openid'), { userId: pending._id, role: 'ADMIN' }),
       'ROLE_CHANGE_FORBIDDEN',
     )
     await expectApiCode(
-      service.setAdminRole('owner-openid', { userId: disabled._id, role: 'ADMIN' }),
+      service.setAdminRole(userIdOf('owner-openid'), { userId: disabled._id, role: 'ADMIN' }),
       'ROLE_CHANGE_FORBIDDEN',
     )
     await expectApiCode(
-      service.setAdminRole('owner-openid', { userId: 'missing-user', role: 'ADMIN' }),
+      service.setAdminRole(userIdOf('owner-openid'), { userId: 'missing-user', role: 'ADMIN' }),
       'USER_NOT_FOUND',
     )
     await expectApiCode(
-      service.setAdminRole('owner-openid', { userId: ' ', role: 'ADMIN' }),
+      service.setAdminRole(userIdOf('owner-openid'), { userId: ' ', role: 'ADMIN' }),
       'INVALID_USER_ID',
     )
     await expectApiCode(
-      service.setAdminRole('owner-openid', {
+      service.setAdminRole(userIdOf('owner-openid'), {
         userId: member._id,
         role: 'MANAGER' as MemberRoleInput['role'],
       }),
@@ -544,25 +545,25 @@ describe('成员身份服务', () => {
     const member = seedUser(repository, 'member-openid', 'MEMBER')
     const pendingAdmin = seedUser(repository, 'pending-admin-openid', 'ADMIN', 'PENDING')
 
-    await expectApiCode(service.appointManager('manager-openid', admin._id), 'FORBIDDEN')
-    await expectApiCode(service.appointManager('admin-openid', admin._id), 'FORBIDDEN')
-    await expectApiCode(service.appointManager('member-openid', admin._id), 'FORBIDDEN')
+    await expectApiCode(service.appointManager(userIdOf('manager-openid'), admin._id), 'FORBIDDEN')
+    await expectApiCode(service.appointManager(userIdOf('admin-openid'), admin._id), 'FORBIDDEN')
+    await expectApiCode(service.appointManager(userIdOf('member-openid'), admin._id), 'FORBIDDEN')
     await expectApiCode(
-      service.appointManager('owner-openid', member._id),
+      service.appointManager(userIdOf('owner-openid'), member._id),
       'MANAGER_TARGET_INVALID',
     )
     await expectApiCode(
-      service.appointManager('owner-openid', pendingAdmin._id),
+      service.appointManager(userIdOf('owner-openid'), pendingAdmin._id),
       'MANAGER_TARGET_INVALID',
     )
     await expectApiCode(
-      service.appointManager('owner-openid', manager._id),
+      service.appointManager(userIdOf('owner-openid'), manager._id),
       'MANAGER_TARGET_INVALID',
     )
-    await expectApiCode(service.appointManager('owner-openid', 'missing-user'), 'USER_NOT_FOUND')
-    await expectApiCode(service.appointManager('owner-openid', ' '), 'INVALID_USER_ID')
+    await expectApiCode(service.appointManager(userIdOf('owner-openid'), 'missing-user'), 'USER_NOT_FOUND')
+    await expectApiCode(service.appointManager(userIdOf('owner-openid'), ' '), 'INVALID_USER_ID')
 
-    await expect(service.appointManager('owner-openid', admin._id)).resolves.toMatchObject({
+    await expect(service.appointManager(userIdOf('owner-openid'), admin._id)).resolves.toMatchObject({
       id: admin._id,
       role: 'MANAGER',
       reviewedBy: owner._id,
@@ -587,29 +588,29 @@ describe('成员身份服务', () => {
     const member = seedUser(repository, 'member-openid', 'MEMBER')
 
     await expectApiCode(
-      service.removeManager('owner-openid', manager._id),
+      service.removeManager(userIdOf('owner-openid'), manager._id),
       'LAST_MANAGER_FORBIDDEN',
     )
     expect(repository.users.get(manager._id)?.role).toBe('MANAGER')
 
     await expectApiCode(
-      service.removeManager('owner-openid', disabledManager._id),
+      service.removeManager(userIdOf('owner-openid'), disabledManager._id),
       'MANAGER_TARGET_INVALID',
     )
     await expectApiCode(
-      service.removeManager('owner-openid', admin._id),
+      service.removeManager(userIdOf('owner-openid'), admin._id),
       'MANAGER_TARGET_INVALID',
     )
     await expectApiCode(
-      service.removeManager('owner-openid', member._id),
+      service.removeManager(userIdOf('owner-openid'), member._id),
       'MANAGER_TARGET_INVALID',
     )
-    await expectApiCode(service.removeManager('manager-openid', manager._id), 'FORBIDDEN')
-    await expectApiCode(service.removeManager('admin-openid', manager._id), 'FORBIDDEN')
-    await expectApiCode(service.removeManager('owner-openid', 'missing-user'), 'USER_NOT_FOUND')
+    await expectApiCode(service.removeManager(userIdOf('manager-openid'), manager._id), 'FORBIDDEN')
+    await expectApiCode(service.removeManager(userIdOf('admin-openid'), manager._id), 'FORBIDDEN')
+    await expectApiCode(service.removeManager(userIdOf('owner-openid'), 'missing-user'), 'USER_NOT_FOUND')
 
-    await service.appointManager('owner-openid', admin._id)
-    await expect(service.removeManager('owner-openid', manager._id)).resolves.toMatchObject({
+    await service.appointManager(userIdOf('owner-openid'), admin._id)
+    await expect(service.removeManager(userIdOf('owner-openid'), manager._id)).resolves.toMatchObject({
       id: manager._id,
       role: 'ADMIN',
       reviewedBy: owner._id,
@@ -618,7 +619,7 @@ describe('成员身份服务', () => {
     expect(repository.users.get(manager._id)?.role).toBe('ADMIN')
 
     await expectApiCode(
-      service.removeManager('owner-openid', admin._id),
+      service.removeManager(userIdOf('owner-openid'), admin._id),
       'LAST_MANAGER_FORBIDDEN',
     )
     expect(repository.users.get(admin._id)?.role).toBe('MANAGER')
@@ -632,7 +633,7 @@ describe('成员身份服务', () => {
     const admin = seedUser(repository, 'admin-openid', 'ADMIN')
 
     await expect(
-      service.transferManager('manager-openid', { targetUserId: admin._id }),
+      service.transferManager(userIdOf('manager-openid'), { targetUserId: admin._id }),
     ).resolves.toMatchObject({
       id: admin._id,
       role: 'MANAGER',
@@ -653,7 +654,7 @@ describe('成员身份服务', () => {
     ).toHaveLength(1)
 
     await expectApiCode(
-      service.transferManager('manager-openid', { targetUserId: admin._id }),
+      service.transferManager(userIdOf('manager-openid'), { targetUserId: admin._id }),
       'FORBIDDEN',
     )
   })
@@ -669,62 +670,62 @@ describe('成员身份服务', () => {
     const member = seedUser(repository, 'member-openid', 'MEMBER')
 
     await expectApiCode(
-      service.transferManager('admin-openid', { targetUserId: admin._id }),
+      service.transferManager(userIdOf('admin-openid'), { targetUserId: admin._id }),
       'FORBIDDEN',
     )
     await expectApiCode(
-      service.transferManager('member-openid', { targetUserId: admin._id }),
+      service.transferManager(userIdOf('member-openid'), { targetUserId: admin._id }),
       'FORBIDDEN',
     )
     await expectApiCode(
-      service.transferManager('owner-openid', { targetUserId: admin._id }),
+      service.transferManager(userIdOf('owner-openid'), { targetUserId: admin._id }),
       'INVALID_USER_ID',
     )
     await expectApiCode(
-      service.transferManager('owner-openid', {
+      service.transferManager(userIdOf('owner-openid'), {
         targetUserId: admin._id,
         sourceManagerId: 'missing-user',
       }),
       'USER_NOT_FOUND',
     )
     await expectApiCode(
-      service.transferManager('owner-openid', {
+      service.transferManager(userIdOf('owner-openid'), {
         targetUserId: admin._id,
         sourceManagerId: admin._id,
       }),
       'MANAGER_TARGET_INVALID',
     )
     await expectApiCode(
-      service.transferManager('owner-openid', {
+      service.transferManager(userIdOf('owner-openid'), {
         targetUserId: member._id,
         sourceManagerId: manager._id,
       }),
       'MANAGER_TARGET_INVALID',
     )
     await expectApiCode(
-      service.transferManager('owner-openid', {
+      service.transferManager(userIdOf('owner-openid'), {
         targetUserId: pendingAdmin._id,
         sourceManagerId: manager._id,
       }),
       'MANAGER_TARGET_INVALID',
     )
     await expectApiCode(
-      service.transferManager('owner-openid', {
+      service.transferManager(userIdOf('owner-openid'), {
         targetUserId: otherManager._id,
         sourceManagerId: manager._id,
       }),
       'MANAGER_TARGET_INVALID',
     )
     await expectApiCode(
-      service.transferManager('manager-openid', { targetUserId: ' ' }),
+      service.transferManager(userIdOf('manager-openid'), { targetUserId: ' ' }),
       'INVALID_USER_ID',
     )
     await expectApiCode(
-      service.transferManager('manager-openid', { targetUserId: 'missing-user' }),
+      service.transferManager(userIdOf('manager-openid'), { targetUserId: 'missing-user' }),
       'USER_NOT_FOUND',
     )
 
-    await service.transferManager('manager-openid', {
+    await service.transferManager(userIdOf('manager-openid'), {
       targetUserId: admin._id,
       sourceManagerId: otherManager._id,
     })
@@ -733,7 +734,7 @@ describe('成员身份服务', () => {
     expect(repository.users.get(admin._id)?.role).toBe('MANAGER')
 
     await expect(
-      service.transferManager('owner-openid', {
+      service.transferManager(userIdOf('owner-openid'), {
         targetUserId: manager._id,
         sourceManagerId: otherManager._id,
       }),

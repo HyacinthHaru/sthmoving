@@ -38,14 +38,14 @@ export class OutboundService {
   ) {}
 
   async createRequest(
-    openid: string,
+    userId: string,
     input: CreateOutboundRequestInput,
   ): Promise<PublicOutboundRequest> {
     const validated = validateCreateInput(input)
 
     return this.repository.runTransaction(async (unitOfWork) => {
-      const user = await unitOfWork.getUserByOpenid(openid)
-      requireApprovedUser(user, openid)
+      const user = await unitOfWork.getUser(userId)
+      requireApprovedUser(user)
 
       const item = await unitOfWork.getItem(validated.itemId)
       if (!item) {
@@ -114,11 +114,11 @@ export class OutboundService {
   }
 
   async listPendingRequests(
-    openid: string,
+    userId: string,
   ): Promise<PublicOutboundRequestDetail[]> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      const reviewer = await unitOfWork.getUserByOpenid(openid)
-      requireReviewer(reviewer, openid)
+      const reviewer = await unitOfWork.getUser(userId)
+      requireReviewer(reviewer)
       const requests = await unitOfWork.listPendingRequests(50)
       const result: PublicOutboundRequestDetail[] = []
       for (const request of requests) {
@@ -146,10 +146,10 @@ export class OutboundService {
     })
   }
 
-  async listMyRequests(openid: string): Promise<PublicMyOutboundRequest[]> {
+  async listMyRequests(userId: string): Promise<PublicMyOutboundRequest[]> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      const user = await unitOfWork.getUserByOpenid(openid)
-      requireApprovedUser(user, openid)
+      const user = await unitOfWork.getUser(userId)
+      requireApprovedUser(user)
       const requests = await unitOfWork.listRequestsByApplicant(user._id, 50)
       const result: PublicMyOutboundRequest[] = []
       for (const request of requests) {
@@ -173,7 +173,7 @@ export class OutboundService {
   }
 
   async getPendingRequestByItem(
-    openid: string,
+    userId: string,
     itemIdInput: string,
   ): Promise<PublicPendingOutboundByItem | null> {
     const itemId = itemIdInput.trim()
@@ -181,8 +181,8 @@ export class OutboundService {
       throw new ApiException('INVALID_ITEM_ID', '物品 ID 无效')
     }
     return this.repository.runTransaction(async (unitOfWork) => {
-      const reviewer = await unitOfWork.getUserByOpenid(openid)
-      requireReviewer(reviewer, openid)
+      const reviewer = await unitOfWork.getUser(userId)
+      requireReviewer(reviewer)
       const request = await unitOfWork.findPendingRequest(itemId)
       if (!request) {
         return null
@@ -205,29 +205,29 @@ export class OutboundService {
   }
 
   async approveRequest(
-    openid: string,
+    userId: string,
     input: ReviewOutboundRequestInput,
   ): Promise<PublicOutboundRequest> {
     const validated = validateReviewInput(input, 'APPROVE')
-    return this.reviewRequest(openid, validated, 'APPROVE')
+    return this.reviewRequest(userId, validated, 'APPROVE')
   }
 
   async rejectRequest(
-    openid: string,
+    userId: string,
     input: ReviewOutboundRequestInput,
   ): Promise<PublicOutboundRequest> {
     const validated = validateReviewInput(input, 'REJECT')
-    return this.reviewRequest(openid, validated, 'REJECT')
+    return this.reviewRequest(userId, validated, 'REJECT')
   }
 
   async directOutbound(
-    openid: string,
+    userId: string,
     input: DirectOutboundInput,
   ): Promise<PublicDirectOutboundResult> {
     const validated = validateDirectInput(input)
     return this.repository.runTransaction(async (unitOfWork) => {
-      const reviewer = await unitOfWork.getUserByOpenid(openid)
-      requireReviewer(reviewer, openid)
+      const reviewer = await unitOfWork.getUser(userId)
+      requireReviewer(reviewer)
       const item = await unitOfWork.getItem(validated.itemId)
       if (!item) {
         throw new ApiException('ITEM_NOT_FOUND', '未找到物品')
@@ -286,13 +286,13 @@ export class OutboundService {
   }
 
   async restoreInbound(
-    openid: string,
+    userId: string,
     input: RestoreInboundInput,
   ): Promise<PublicRestoreInboundResult> {
     const validated = validateRestoreInput(input)
     return this.repository.runTransaction(async (unitOfWork) => {
-      const reviewer = await unitOfWork.getUserByOpenid(openid)
-      requireReviewer(reviewer, openid)
+      const reviewer = await unitOfWork.getUser(userId)
+      requireReviewer(reviewer)
       const item = await unitOfWork.getItem(validated.itemId)
       if (!item) {
         throw new ApiException('ITEM_NOT_FOUND', '未找到物品')
@@ -363,13 +363,13 @@ export class OutboundService {
   }
 
   async batchRestoreInbound(
-    openid: string,
+    userId: string,
     input: BatchRestoreInboundInput,
   ): Promise<PublicBatchRestoreInboundResult> {
     const validated = validateBatchRestoreInput(input)
     return this.repository.runTransaction(async (unitOfWork) => {
-      const reviewer = await unitOfWork.getUserByOpenid(openid)
-      requireReviewer(reviewer, openid)
+      const reviewer = await unitOfWork.getUser(userId)
+      requireReviewer(reviewer)
 
       const items: Array<{
         item: ItemRecord
@@ -467,13 +467,13 @@ export class OutboundService {
   }
 
   async batchDirectOutbound(
-    openid: string,
+    userId: string,
     input: BatchDirectOutboundInput,
   ): Promise<PublicBatchDirectOutboundResult> {
     const validated = validateBatchDirectInput(input)
     return this.repository.runTransaction(async (unitOfWork) => {
-      const reviewer = await unitOfWork.getUserByOpenid(openid)
-      requireReviewer(reviewer, openid)
+      const reviewer = await unitOfWork.getUser(userId)
+      requireReviewer(reviewer)
 
       const items: Array<{
         item: ItemRecord
@@ -558,14 +558,14 @@ export class OutboundService {
   }
 
   async deleteItems(
-    openid: string,
+    userId: string,
     input: BatchDeleteItemsInput,
   ): Promise<PublicBatchDeleteResult> {
     const validated = validateBatchDeleteInput(input)
     const deleted = await this.repository.runTransaction(
       async (unitOfWork) => {
-        const reviewer = await unitOfWork.getUserByOpenid(openid)
-        requireReviewer(reviewer, openid)
+        const reviewer = await unitOfWork.getUser(userId)
+        requireReviewer(reviewer)
         const items: ItemRecord[] = []
         const labels = [] as Array<NonNullable<
           Awaited<ReturnType<typeof unitOfWork.getLabelByItemId>>
@@ -634,13 +634,13 @@ export class OutboundService {
   }
 
   private async reviewRequest(
-    openid: string,
+    userId: string,
     input: ReviewOutboundRequestInput,
     decision: 'APPROVE' | 'REJECT',
   ): Promise<PublicOutboundRequest> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      const reviewer = await unitOfWork.getUserByOpenid(openid)
-      requireReviewer(reviewer, openid)
+      const reviewer = await unitOfWork.getUser(userId)
+      requireReviewer(reviewer)
       const request = await unitOfWork.getRequest(input.requestId)
       if (!request) {
         throw new ApiException(
@@ -735,9 +735,8 @@ function validateCreateInput(
 
 function requireApprovedUser(
   user: UserRecord | null,
-  openid: string,
 ): asserts user is UserRecord {
-  if (!user || user.openid !== openid) {
+  if (!user) {
     throw new ApiException('UNAUTHENTICATED', '当前微信用户尚未建立账号')
   }
   if (user.status !== 'APPROVED') {
@@ -747,9 +746,8 @@ function requireApprovedUser(
 
 function requireReviewer(
   user: UserRecord | null,
-  openid: string,
 ): asserts user is UserRecord {
-  requireApprovedUser(user, openid)
+  requireApprovedUser(user)
   if (
     user.role !== 'ADMIN' &&
     user.role !== 'MANAGER' &&

@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import { route } from '../cloudfunctions/api/src/router'
 
-const context = { openid: 'openid-for-test' }
+const context = {
+  userId: 'user-for-test',
+  openid: 'openid-for-test',
+}
 
 describe('云函数 API 路由', () => {
   it('提供可验证的健康检查', async () => {

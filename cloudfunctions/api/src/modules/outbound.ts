@@ -71,34 +71,34 @@ export function createOutboundHandlers(
           '离库申请请求字段无效',
         )
       }
-      return createService(deps).createRequest(context.openid, {
+      return createService(deps).createRequest(context.userId, {
         itemId: input.itemId,
         reason: input.reason,
       })
     },
 
     listPending: async (_payload, context) =>
-      createService(deps).listPendingRequests(context.openid),
+      createService(deps).listPendingRequests(context.userId),
 
     listMine: async (_payload, context) =>
-      createService(deps).listMyRequests(context.openid),
+      createService(deps).listMyRequests(context.userId),
 
     pendingByItem: async (payload, context) => {
       const itemId = (payload as { itemId?: unknown } | undefined)?.itemId
       if (typeof itemId !== 'string') {
         throw new ApiException('INVALID_ITEM_ID', '物品 ID 无效')
       }
-      return createService(deps).getPendingRequestByItem(context.openid, itemId)
+      return createService(deps).getPendingRequestByItem(context.userId, itemId)
     },
 
     approve: async (payload, context) => {
       const input = parseReviewPayload(payload, false)
-      return createService(deps).approveRequest(context.openid, input)
+      return createService(deps).approveRequest(context.userId, input)
     },
 
     reject: async (payload, context) => {
       const input = parseReviewPayload(payload, true)
-      return createService(deps).rejectRequest(context.openid, input)
+      return createService(deps).rejectRequest(context.userId, input)
     },
 
     direct: async (payload, context) => {
@@ -113,7 +113,7 @@ export function createOutboundHandlers(
           '直接离库请求字段无效',
         )
       }
-      return createService(deps).directOutbound(context.openid, {
+      return createService(deps).directOutbound(context.userId, {
         itemId: input.itemId,
         expectedVersion: input.expectedVersion,
         commitSummary: input.commitSummary,
@@ -122,22 +122,22 @@ export function createOutboundHandlers(
 
     restore: async (payload, context) => {
       const input = parseRestorePayload(payload)
-      return createService(deps).restoreInbound(context.openid, input)
+      return createService(deps).restoreInbound(context.userId, input)
     },
 
     batchRestore: async (payload, context) => {
       const input = parseBatchRestorePayload(payload)
-      return createService(deps).batchRestoreInbound(context.openid, input)
+      return createService(deps).batchRestoreInbound(context.userId, input)
     },
 
     batchDirect: async (payload, context) => {
       const input = parseBatchDirectPayload(payload)
-      return createService(deps).batchDirectOutbound(context.openid, input)
+      return createService(deps).batchDirectOutbound(context.userId, input)
     },
 
     batchDelete: async (payload, context) => {
       const input = parseBatchDeletePayload(payload)
-      return createService(deps).deleteItems(context.openid, input)
+      return createService(deps).deleteItems(context.userId, input)
     },
   }
 }

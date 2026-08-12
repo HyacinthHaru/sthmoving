@@ -41,8 +41,8 @@ interface TransactionDatabase {
 class CloudCategoryUnitOfWork implements CategoryUnitOfWork {
   constructor(private readonly database: TransactionDatabase) {}
 
-  getUserByOpenid(openid: string): Promise<UserRecord | null> {
-    return this.getFirst<UserRecord>('users', { openid })
+  getUser(userId: string): Promise<UserRecord | null> {
+    return this.getFirst<UserRecord>('users', { _id: userId })
   }
 
   async getCategory(categoryId: string): Promise<CategoryRecord | null> {
