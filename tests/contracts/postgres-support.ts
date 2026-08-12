@@ -9,6 +9,8 @@ const connectionString = process.env['TEST_DATABASE_URL']
 export const describePostgres = connectionString ? describe : describe.skip
 
 const tables = [
+  'sessions',
+  'files',
   'item_operation_logs',
   'outbound_requests',
   'item_labels',

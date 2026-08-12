@@ -117,6 +117,7 @@ describePostgres('自建后端的 HTTP 接口', () => {
     await truncateAll(await getTestPool())
     ownerToken = expectData<{ token: string }>((await signIn('code-owner')).body)
       .token
+    await call('auth', 'bootstrapOwner', { token: bootstrapToken })
   })
 
   afterAll(async () => {
@@ -162,7 +163,7 @@ describePostgres('自建后端的 HTTP 接口', () => {
   })
 
   it('伪造的令牌返回 401', async () => {
-    const { status } = await call('system', 'ping', {}, '伪造令牌')
+    const { status } = await call('system', 'ping', {}, 'not-a-real-token')
     expect(status).toBe(401)
   })
 
@@ -184,14 +185,12 @@ describePostgres('自建后端的 HTTP 接口', () => {
     expect(response.status).toBe(400)
   })
 
-  it('走完登记与查询的完整链路', async () => {
-    const bootstrap = await call('auth', 'bootstrapOwner', {
-      token: bootstrapToken,
-    })
-    expect(expectData<{ user: { role: string } }>(bootstrap.body).user.role).toBe(
-      'OWNER',
-    )
+  it('初始化后的账号具备所有者权限', async () => {
+    const { body } = await call('auth', 'login')
+    expect(expectData<{ user: { role: string } }>(body).user.role).toBe('OWNER')
+  })
 
+  it('走完登记与查询的完整链路', async () => {
     const created = await call('categories', 'create', { name: '活动器材' })
     const category = expectData<{ id: string; name: string }>(created.body)
     expect(category.name).toBe('活动器材')
@@ -226,7 +225,6 @@ describePostgres('自建后端的 HTTP 接口', () => {
   })
 
   it('重名分类返回业务错误码', async () => {
-    await call('auth', 'bootstrapOwner', { token: bootstrapToken })
     await call('categories', 'create', { name: '活动器材' })
 
     const { status, body } = await call('categories', 'create', {
@@ -236,6 +234,16 @@ describePostgres('自建后端的 HTTP 接口', () => {
     expect(body).toMatchObject({
       ok: false,
       error: { code: 'CATEGORY_NAME_EXISTS' },
+    })
+  })
+
+  it('重复初始化所有者被拒绝', async () => {
+    const { body } = await call('auth', 'bootstrapOwner', {
+      token: bootstrapToken,
+    })
+    expect(body).toMatchObject({
+      ok: false,
+      error: { code: 'OWNER_BOOTSTRAP_CLOSED' },
     })
   })
 
@@ -381,7 +389,6 @@ describePostgres('自建后端的 HTTP 接口', () => {
   })
 
   it('生成小程序码后凭签名地址取回标签图片', async () => {
-    await call('auth', 'bootstrapOwner', { token: bootstrapToken })
     const item = await call('items', 'create', {
       name: '折叠桌',
       images: [],
