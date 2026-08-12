@@ -5,9 +5,16 @@ import type { Pool } from 'pg'
 
 import { withTransaction } from './pool'
 
-const migrationsDirectory = join(import.meta.dirname, '../../migrations')
+export function resolveMigrationsDirectory(
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  return env['MIGRATIONS_DIR'] ?? join(process.cwd(), 'server', 'migrations')
+}
 
-export async function migrate(pool: Pool): Promise<string[]> {
+export async function migrate(
+  pool: Pool,
+  migrationsDirectory = resolveMigrationsDirectory(),
+): Promise<string[]> {
   await pool.query(
     `CREATE TABLE IF NOT EXISTS schema_migrations (
        name text PRIMARY KEY,

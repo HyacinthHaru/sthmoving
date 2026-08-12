@@ -1,5 +1,4 @@
 import type { ApiDependencies } from './dependencies'
-import { createCloudDependencies } from './dependencies.cloud'
 import { ApiException } from './errors'
 import { createAuthHandlers } from './modules/auth'
 import { createCategoryHandlers } from './modules/categories'
@@ -77,5 +76,3 @@ export function createRouter(deps: ApiDependencies): ApiRouter {
     }
   }
 }
-
-export const route: ApiRouter = createRouter(createCloudDependencies())

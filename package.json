@@ -18,7 +18,9 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "check": "npm run check:secrets && npm run lint && npm run typecheck && npm run test",
-    "build:cloud": "tsc -p cloudfunctions/api/tsconfig.json"
+    "build:cloud": "tsc -p cloudfunctions/api/tsconfig.json",
+    "build:server": "tsc -p tsconfig.server.build.json",
+    "start:server": "node server/dist/server/src/main.js"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

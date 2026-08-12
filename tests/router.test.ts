@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { route } from '../cloudfunctions/api/src/router'
+import { createCloudDependencies } from '../cloudfunctions/api/src/dependencies.cloud'
+import { createRouter } from '../cloudfunctions/api/src/router'
+
+const route = createRouter(createCloudDependencies())
 
 const context = {
   userId: 'user-for-test',

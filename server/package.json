@@ -1,0 +1,9 @@
+{
+  "name": "sthmoving-server",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/server/src/main.js",
+  "dependencies": {
+    "pg": "8.16.3"
+  }
+}
