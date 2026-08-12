@@ -1,10 +1,14 @@
 import { Pool } from 'pg'
 import type { PoolClient } from 'pg'
 
+import { isRetryableDatabaseError, translateDatabaseError } from './errors'
+
 export interface DatabaseConfig {
   connectionString: string
   max?: number
 }
+
+export const maxTransactionAttempts = 3
 
 export function createPool(config: DatabaseConfig): Pool {
   return new Pool({
@@ -25,7 +29,7 @@ export async function withClient<T>(
   }
 }
 
-export async function withTransaction<T>(
+async function runTransaction<T>(
   pool: Pool,
   operation: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
@@ -36,8 +40,33 @@ export async function withTransaction<T>(
       await client.query('COMMIT')
       return result
     } catch (error) {
-      await client.query('ROLLBACK')
+      try {
+        await client.query('ROLLBACK')
+      } catch (rollbackError) {
+        console.error(rollbackError)
+      }
       throw error
     }
   })
+}
+
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
+export async function withTransaction<T>(
+  pool: Pool,
+  operation: (client: PoolClient) => Promise<T>,
+  attempts: number = maxTransactionAttempts,
+): Promise<T> {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await runTransaction(pool, operation)
+    } catch (error) {
+      if (attempt >= attempts || !isRetryableDatabaseError(error)) {
+        throw translateDatabaseError(error)
+      }
+      await delay(attempt * 20)
+    }
+  }
 }
