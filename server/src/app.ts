@@ -2,9 +2,12 @@ import type { IncomingMessage, Server } from 'node:http'
 
 import type { Pool } from 'pg'
 
-import { ApiException } from '../../cloudfunctions/api/src/errors'
 import { createRouter } from '../../cloudfunctions/api/src/router'
 import type { RequestContext } from '../../cloudfunctions/api/src/types'
+import { createBearerAuthenticator, createSessionRoute } from './auth/routes'
+import { PostgresSessionStore } from './auth/sessions'
+import type { WeChatAuthClient } from './auth/wechat'
+import { HttpWeChatAuthClient } from './auth/wechat'
 import type { ServerConfig } from './config'
 import { migrate } from './db/migrate'
 import { createPool } from './db/pool'
@@ -18,6 +21,7 @@ export interface ServerOverrides {
   authenticate?: (request: IncomingMessage) => Promise<RequestContext>
   external?: ExternalDependencies
   routes?: readonly HttpRoute[]
+  wechat?: WeChatAuthClient
 }
 
 export interface StartedServer {
@@ -25,10 +29,6 @@ export interface StartedServer {
   readonly pool: Pool
   readonly port: number
   close(): Promise<void>
-}
-
-async function rejectSession(): Promise<RequestContext> {
-  throw new ApiException('UNAUTHENTICATED', '会话服务尚未启用')
 }
 
 function listen(server: Server, port: number): Promise<number> {
@@ -57,18 +57,35 @@ export async function startServer(
       await migrate(pool)
     }
 
+    const dependencies = createPgDependencies(
+      pool,
+      overrides.external ?? unavailableExternalDependencies,
+    )
+    const sessions = new PostgresSessionStore(
+      pool,
+      config.sessionTtlDays * 24 * 60 * 60 * 1000,
+    )
+    const wechat =
+      overrides.wechat ??
+      new HttpWeChatAuthClient({
+        appId: config.wechatAppId,
+        appSecret: config.wechatAppSecret,
+      })
+
     const server = createHttpApi({
-      route: createRouter(
-        createPgDependencies(
-          pool,
-          overrides.external ?? unavailableExternalDependencies,
-        ),
-      ),
-      authenticate: overrides.authenticate ?? rejectSession,
+      route: createRouter(dependencies),
+      authenticate: overrides.authenticate ?? createBearerAuthenticator(sessions),
       checkHealth: async () => {
         await pool.query('SELECT 1')
       },
-      routes: overrides.routes ?? [],
+      routes: [
+        createSessionRoute({
+          sessions,
+          wechat,
+          membership: dependencies.membership,
+        }),
+        ...(overrides.routes ?? []),
+      ],
     })
 
     const port = await listen(server, config.port)

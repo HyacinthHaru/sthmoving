@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'node:crypto'
+
 import type { ApiDependencies } from '../dependencies'
 import { ApiException } from '../errors'
 import { MembershipService } from '../membership/service'
@@ -7,8 +9,26 @@ interface BootstrapPayload {
   token?: unknown
 }
 
+const minBootstrapTokenLength = 16
+
 function createService(deps: ApiDependencies): MembershipService {
   return new MembershipService(deps.membership)
+}
+
+function matchesBootstrapToken(
+  configured: string | undefined,
+  submitted: unknown,
+): boolean {
+  if (
+    !configured ||
+    configured.length < minBootstrapTokenLength ||
+    typeof submitted !== 'string'
+  ) {
+    return false
+  }
+  const expected = Buffer.from(configured, 'utf8')
+  const actual = Buffer.from(submitted, 'utf8')
+  return expected.length === actual.length && timingSafeEqual(expected, actual)
 }
 
 export function createAuthHandlers(
@@ -19,13 +39,12 @@ export function createAuthHandlers(
       createService(deps).login(context.userId, context.openid),
 
     bootstrapOwner: async (payload, context) => {
-      const configuredToken = process.env['OWNER_BOOTSTRAP_TOKEN']
       const submittedToken = (payload as BootstrapPayload | undefined)?.token
       if (
-        !configuredToken ||
-        configuredToken.length < 16 ||
-        typeof submittedToken !== 'string' ||
-        submittedToken !== configuredToken
+        !matchesBootstrapToken(
+          process.env['OWNER_BOOTSTRAP_TOKEN'],
+          submittedToken,
+        )
       ) {
         throw new ApiException(
           'INVALID_BOOTSTRAP_TOKEN',

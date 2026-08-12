@@ -50,8 +50,16 @@ AppSecret、访问令牌及云密钥不得写入小程序代码或提交到仓�
 docker compose -f docker-compose.dev.yml up
 ```
 
-服务监听 8080 端口，`GET /health` 返回数据库连通状态，`POST /api` 接收与云函数
-相同的 `{module, action, payload}` 请求体。可用的环境变量：
+服务监听 8080 端口，端点如下：
+
+| 端点 | 鉴权 | 说明 |
+|---|---|---|
+| `GET /health` | 无 | 数据库连通状态 |
+| `POST /auth/session` | 无 | 用 `{code}` 换取访问令牌 |
+| `POST /api` | Bearer 令牌 | 与云函数相同的 `{module, action, payload}` |
+
+访问令牌是随机串，服务端只保存它的 SHA-256 摘要；权限每次请求都回数据库查，成员
+被停用后立即失效，不必等令牌过期。可用的环境变量：
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
@@ -60,6 +68,9 @@ docker compose -f docker-compose.dev.yml up
 | `DATABASE_POOL_MAX` | 10 | 连接池上限 |
 | `RUN_MIGRATIONS` | true | 启动时执行 `server/migrations` |
 | `MIGRATIONS_DIR` | `<工作目录>/server/migrations` | 迁移脚本目录 |
+| `SESSION_TTL_DAYS` | 30 | 访问令牌有效期 |
+| `WECHAT_APP_ID` | 无，必填 | 小程序 AppID |
+| `WECHAT_APP_SECRET` | 无，必填 | 小程序密钥，只允许放在服务端环境变量 |
 | `OWNER_BOOTSTRAP_TOKEN` | 无 | 首位所有者初始化口令，至少 16 位 |
 
 只跑数据库时使用 `docker compose -f docker-compose.test.yml up -d`，并把

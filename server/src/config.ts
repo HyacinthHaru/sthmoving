@@ -3,6 +3,9 @@ export interface ServerConfig {
   readonly databaseUrl: string
   readonly databasePoolMax: number
   readonly runMigrations: boolean
+  readonly sessionTtlDays: number
+  readonly wechatAppId: string
+  readonly wechatAppSecret: string
 }
 
 export function requireEnv(
@@ -55,5 +58,8 @@ export function readServerConfig(
     databaseUrl: requireEnv(env, 'DATABASE_URL'),
     databasePoolMax: readNumber(env, 'DATABASE_POOL_MAX', 10),
     runMigrations: readBoolean(env, 'RUN_MIGRATIONS', true),
+    sessionTtlDays: readNumber(env, 'SESSION_TTL_DAYS', 30),
+    wechatAppId: requireEnv(env, 'WECHAT_APP_ID'),
+    wechatAppSecret: requireEnv(env, 'WECHAT_APP_SECRET'),
   }
 }

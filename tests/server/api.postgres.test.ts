@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, beforeEach, expect, it } from 'vitest'
 
-import { deriveUserId } from '../../cloudfunctions/api/src/identity'
+import { ApiException } from '../../cloudfunctions/api/src/errors'
 import type { ApiResponse } from '../../cloudfunctions/api/src/types'
 import { startServer } from '../../server/src/app'
 import type { StartedServer } from '../../server/src/app'
+import type { WeChatAuthClient } from '../../server/src/auth/wechat'
 import type { ExternalDependencies } from '../../server/src/dependencies.pg'
 import { unavailableExternalDependencies } from '../../server/src/external/unavailable'
-import { ApiException } from '../../cloudfunctions/api/src/errors'
 import {
   closeTestPool,
   describePostgres,
@@ -14,7 +14,6 @@ import {
   truncateAll,
 } from '../contracts/postgres-support'
 
-const ownerOpenid = 'openid-owner'
 const bootstrapToken = 'bootstrap-token-for-test'
 
 const external: ExternalDependencies = {
@@ -24,25 +23,53 @@ const external: ExternalDependencies = {
   resolveFileUrl: async (fileId) => `https://files.test/${fileId}`,
 }
 
+const wechat: WeChatAuthClient = {
+  codeToOpenid: async (code) => {
+    if (!code.startsWith('code-')) {
+      throw new ApiException('INVALID_LOGIN_CODE', '微信登录凭证无效或已过期')
+    }
+    return `openid-${code.slice('code-'.length)}`
+  },
+}
+
 describePostgres('自建后端的 HTTP 接口', () => {
   let started: StartedServer
   let baseUrl: string
+  let ownerToken: string
+
+  async function signIn(code: string): Promise<{
+    status: number
+    body: ApiResponse
+  }> {
+    const response = await fetch(`${baseUrl}/auth/session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    })
+    return {
+      status: response.status,
+      body: (await response.json()) as ApiResponse,
+    }
+  }
 
   async function call(
     module: string,
     action: string,
     payload: unknown = {},
-    openid: string | null = ownerOpenid,
+    token: string | null = ownerToken,
   ): Promise<{ status: number; body: ApiResponse }> {
     const response = await fetch(`${baseUrl}/api`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(openid ? { 'x-test-openid': openid } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({ module, action, payload }),
     })
-    return { status: response.status, body: (await response.json()) as ApiResponse }
+    return {
+      status: response.status,
+      body: (await response.json()) as ApiResponse,
+    }
   }
 
   function expectData<T>(body: ApiResponse): T {
@@ -53,7 +80,7 @@ describePostgres('自建后端的 HTTP 接口', () => {
   }
 
   beforeAll(async () => {
-    const pool = await getTestPool()
+    await getTestPool()
     process.env['OWNER_BOOTSTRAP_TOKEN'] = bootstrapToken
     started = await startServer(
       {
@@ -61,24 +88,19 @@ describePostgres('自建后端的 HTTP 接口', () => {
         databaseUrl: process.env['TEST_DATABASE_URL'] as string,
         databasePoolMax: 4,
         runMigrations: true,
+        sessionTtlDays: 30,
+        wechatAppId: 'wxtest',
+        wechatAppSecret: 'unused',
       },
-      {
-        external,
-        authenticate: async (request) => {
-          const openid = request.headers['x-test-openid']
-          if (typeof openid !== 'string') {
-            throw new ApiException('UNAUTHENTICATED', '缺少身份标识')
-          }
-          return { userId: deriveUserId(openid), openid }
-        },
-      },
+      { external, wechat },
     )
     baseUrl = `http://127.0.0.1:${started.port}`
-    await truncateAll(pool)
   })
 
   beforeEach(async () => {
     await truncateAll(await getTestPool())
+    ownerToken = expectData<{ token: string }>((await signIn('code-owner')).body)
+      .token
   })
 
   afterAll(async () => {
@@ -96,10 +118,36 @@ describePostgres('自建后端的 HTTP 接口', () => {
     })
   })
 
-  it('缺少身份的请求返回 401', async () => {
+  it('登录换取访问令牌并建立待审成员', async () => {
+    const { body } = await signIn('code-newcomer')
+    const data = expectData<{
+      token: string
+      expiresAt: string
+      session: { user: { status: string }; accessState: string }
+    }>(body)
+    expect(data.token.length).toBeGreaterThan(20)
+    expect(Date.parse(data.expiresAt)).toBeGreaterThan(Date.now())
+    expect(data.session.user.status).toBe('PENDING')
+    expect(data.session.accessState).toBe('UNAPPLIED')
+  })
+
+  it('失效的微信凭证返回业务错误码', async () => {
+    const { body } = await signIn('bad-code')
+    expect(body).toMatchObject({
+      ok: false,
+      error: { code: 'INVALID_LOGIN_CODE' },
+    })
+  })
+
+  it('缺少令牌的请求返回 401', async () => {
     const { status, body } = await call('system', 'ping', {}, null)
     expect(status).toBe(401)
     expect(body).toMatchObject({ ok: false, error: { code: 'UNAUTHENTICATED' } })
+  })
+
+  it('伪造的令牌返回 401', async () => {
+    const { status } = await call('system', 'ping', {}, '伪造令牌')
+    expect(status).toBe(401)
   })
 
   it('未实现的接口返回 404', async () => {
@@ -113,7 +161,7 @@ describePostgres('自建后端的 HTTP 接口', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-test-openid': ownerOpenid,
+        Authorization: `Bearer ${ownerToken}`,
       },
       body: '{',
     })
@@ -175,11 +223,25 @@ describePostgres('自建后端的 HTTP 接口', () => {
     })
   })
 
-  it('未初始化所有者时拒绝错误的初始化口令', async () => {
+  it('拒绝错误的所有者初始化口令', async () => {
     const { body } = await call('auth', 'bootstrapOwner', { token: '错误口令' })
     expect(body).toMatchObject({
       ok: false,
       error: { code: 'INVALID_BOOTSTRAP_TOKEN' },
     })
+  })
+
+  it('权限不足的成员不能创建分类', async () => {
+    const memberToken = expectData<{ token: string }>(
+      (await signIn('code-member')).body,
+    ).token
+
+    const { body } = await call(
+      'categories',
+      'create',
+      { name: '活动器材' },
+      memberToken,
+    )
+    expect(body).toMatchObject({ ok: false })
   })
 })
