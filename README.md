@@ -39,6 +39,33 @@ AppSecret、访问令牌及云密钥不得写入小程序代码或提交到仓�
 阶段 3 小程序码批次的集合、索引、云调用权限和人工验收步骤见
 [阶段 3 小程序码云环境配置](./docs/阶段3小程序码云环境配置.md)。
 
+## 自建后端
+
+`server/` 是正在迁移中的自建后端，与云函数共用 `cloudfunctions/api/src` 下的
+业务代码，只替换仓储与外部依赖的实现。
+
+启动开发环境：
+
+```
+docker compose -f docker-compose.dev.yml up
+```
+
+服务监听 8080 端口，`GET /health` 返回数据库连通状态，`POST /api` 接收与云函数
+相同的 `{module, action, payload}` 请求体。可用的环境变量：
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `PORT` | 8080 | 监听端口 |
+| `DATABASE_URL` | 无，必填 | PostgreSQL 连接串 |
+| `DATABASE_POOL_MAX` | 10 | 连接池上限 |
+| `RUN_MIGRATIONS` | true | 启动时执行 `server/migrations` |
+| `MIGRATIONS_DIR` | `<工作目录>/server/migrations` | 迁移脚本目录 |
+| `OWNER_BOOTSTRAP_TOKEN` | 无 | 首位所有者初始化口令，至少 16 位 |
+
+只跑数据库时使用 `docker compose -f docker-compose.test.yml up -d`，并把
+`TEST_DATABASE_URL` 指向它，`npm run test` 才会执行真实数据库用例；未配置时这些
+用例自动跳过。
+
 ## 当前实现范围
 
 - 微信登录、成员申请与审核
