@@ -295,6 +295,15 @@ describe('分类服务', () => {
     )
     expect(repository.categories.has(referenced.id)).toBe(true)
 
+    repository.itemCategoryIds.delete(referenced.id)
+    repository.categories.set(referenced.id, {
+      ...repository.categories.get(referenced.id)!,
+      item_reference_count: 1,
+    })
+    await expect(
+      service.delete('admin-openid', referenced.id),
+    ).resolves.toEqual({ id: referenced.id })
+
     const [preset] = await service.listManageable('admin-openid')
     await expectApiCode(
       service.delete('admin-openid', preset!.id),

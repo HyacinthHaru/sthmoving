@@ -470,7 +470,7 @@ describe('离库申请服务', () => {
     )
   })
 
-  it('管理员列表只返回待处理申请及关联摘要', async () => {
+  it('管理员列表只返回待处理申请及关联摘要，并跳过关联缺失的申请', async () => {
     const repository = prepareRepository()
     addAdmin(repository)
     repository.items.set('item-1', {
@@ -494,6 +494,15 @@ describe('离库申请服务', () => {
       status: 'REJECTED',
       created_at: '2026-07-30T02:00:00.000Z',
       updated_at: '2026-07-30T02:00:00.000Z',
+    })
+    repository.requests.set('outbound-orphan', {
+      _id: 'outbound-orphan',
+      item_id: 'item-removed',
+      applicant_id: 'user-member',
+      reason: '物品已删除',
+      status: 'PENDING',
+      created_at: '2026-07-30T01:00:00.000Z',
+      updated_at: '2026-07-30T01:00:00.000Z',
     })
     const service = createService(repository)
 
