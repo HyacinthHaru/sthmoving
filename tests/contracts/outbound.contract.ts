@@ -197,10 +197,10 @@ export function describeOutboundRepositoryContract(
       const repository = await harness.create({
         outboundRequests: [
           ...requestsAtHours([3, 9, 1, 11, 5, 0, 7, 2, 10, 4, 8, 6]),
-          createOutboundRequest('request-other-1', 'item-1', 'user-2', {
+          createOutboundRequest('request-other-1', 'item-other-1', 'user-2', {
             created_at: atHour(23),
           }),
-          createOutboundRequest('request-other-2', 'item-1', 'user-2', {
+          createOutboundRequest('request-other-2', 'item-other-2', 'user-2', {
             created_at: atHour(22),
           }),
         ],
