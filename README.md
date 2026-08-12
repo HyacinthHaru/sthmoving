@@ -87,6 +87,9 @@ docker compose -f docker-compose.dev.yml up
 | `MINI_PROGRAM_ENVIRONMENT` | release | 小程序码指向的版本，可选 develop、trial、release |
 | `OWNER_BOOTSTRAP_TOKEN` | 无 | 首位所有者初始化口令，至少 16 位 |
 
+生产部署（Dockerfile + Caddy + 微信后台配置 + 备份）见
+[自建后端部署](./docs/自建后端部署.md)。
+
 只跑数据库时使用 `docker compose -f docker-compose.test.yml up -d`，并把
 `TEST_DATABASE_URL` 指向它，`npm run test` 才会执行真实数据库用例；未配置时这些
 用例自动跳过。

@@ -23,6 +23,9 @@
     "start:server": "node server/dist/server/src/main.js",
     "migrate": "node server/dist/server/src/migration/cli.js"
   },
+  "dependencies": {
+    "pg": "8.16.3"
+  },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/node": "26.1.2",
@@ -30,7 +33,6 @@
     "@vitest/coverage-v8": "4.1.10",
     "eslint": "10.8.0",
     "miniprogram-api-typings": "5.2.2",
-    "pg": "8.16.3",
     "typescript": "6.0.3",
     "typescript-eslint": "8.65.0",
     "vitest": "4.1.10",

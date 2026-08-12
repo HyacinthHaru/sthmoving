@@ -1,5 +1,5 @@
-import type { MiniProgramEnvironment } from '../../cloudfunctions/api/src/labels/external'
-import { readMiniProgramEnvironment } from '../../cloudfunctions/api/src/labels/external'
+import type { MiniProgramEnvironment } from '../../cloudfunctions/api/src/labels/environment'
+import { readMiniProgramEnvironment } from '../../cloudfunctions/api/src/labels/environment'
 
 export interface ServerConfig {
   readonly port: number

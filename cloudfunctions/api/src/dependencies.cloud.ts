@@ -3,9 +3,9 @@ import { CloudStorageUrlResolver } from './cloud-storage'
 import type { ApiDependencies } from './dependencies'
 import { CloudItemRepository } from './items/cloud-repository'
 import { CloudLabelRepository } from './labels/cloud-repository'
+import { readMiniProgramEnvironment } from './labels/environment'
 import {
   CloudLabelFileStorage,
-  readMiniProgramEnvironment,
   WeChatMiniProgramCodeGenerator,
 } from './labels/external'
 import { CloudMembershipRepository } from './membership/cloud-repository'

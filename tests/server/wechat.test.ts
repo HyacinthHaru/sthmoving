@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { readMiniProgramEnvironment } from '../../cloudfunctions/api/src/labels/external'
+import { readMiniProgramEnvironment } from '../../cloudfunctions/api/src/labels/environment'
 import { WeChatAccessTokenProvider } from '../../server/src/wechat/access-token'
 import { HttpMiniProgramCodeGenerator } from '../../server/src/wechat/mini-program-code'
 
