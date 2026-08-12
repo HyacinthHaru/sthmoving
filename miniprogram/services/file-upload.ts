@@ -1,3 +1,5 @@
+import { requestUploadTicket } from './cloud-api'
+
 export type UploadPurpose = 'ITEM_IMAGE' | 'AVATAR'
 
 export interface UploadTicket {
@@ -44,18 +46,6 @@ export async function uploadFile(
   return ticket.reference
 }
 
-export async function uploadFiles(
-  deps: UploadDependencies,
-  purpose: UploadPurpose,
-  filePaths: readonly string[],
-): Promise<string[]> {
-  const references: string[] = []
-  for (const filePath of filePaths) {
-    references.push(await uploadFile(deps, purpose, filePath))
-  }
-  return references
-}
-
 export function readTempFile(filePath: string): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
     wx.getFileSystemManager().readFile({
@@ -87,4 +77,10 @@ export function putUploadedFile(
       fail: reject,
     })
   })
+}
+
+export const uploadDependencies: UploadDependencies = {
+  requestTicket: requestUploadTicket,
+  readFile: readTempFile,
+  putFile: putUploadedFile,
 }

@@ -16,12 +16,13 @@
    `npm run install:supvan-sdk` 安装本机打印 SDK。
 3. 将 `project.private.config.example.json` 复制为
    `project.private.config.json`，并填写实际微信小程序 AppID。
-4. 确认 `miniprogram/config/env.ts` 中的云环境 ID 与当前微信云开发环境一致。
+4. 把 `miniprogram/config/env.ts` 中的 `apiBaseUrl` 改成后端实际域名，并在微信后台把
+   该域名加入 request 与 downloadFile 合法域名。
 5. 使用微信开发者工具打开项目根目录。
 6. 执行 `npm run check` 验证代码。
 
 仓库中的 `project.config.json` 使用游客 AppID；实际 AppID 只保存在被
-`.gitignore` 排除的 `project.private.config.json` 中。云环境 ID 是客户端运行所需的公开标识。
+`.gitignore` 排除的 `project.private.config.json` 中。后端域名是客户端运行所需的公开标识。
 AppSecret、访问令牌及云密钥不得写入小程序代码或提交到仓库。
 
 提交前执行 `npm run check`。该命令会先扫描仓库文件中的常见凭据模式，

@@ -218,7 +218,7 @@ export function createFileRoutes(
 
         const content = await options.storage.read(path)
         if (!content) {
-          sendApiError(response, 'NOT_IMPLEMENTED', '文件不存在')
+          sendApiError(response, 'NOT_FOUND', '文件不存在')
           return
         }
 

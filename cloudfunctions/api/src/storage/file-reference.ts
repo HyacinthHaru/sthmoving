@@ -30,3 +30,16 @@ export function isManagedFileReference(fileId: string): boolean {
 export function isAvatarOwnedBy(fileId: string, userId: string): boolean {
   return fileId.includes(`/avatars/${userId}/`)
 }
+
+export function isFileOwnedBy(fileId: string, userId: string): boolean {
+  const path = parseSelfHostedPath(fileId)
+  if (path === null) {
+    return false
+  }
+  const segments = path.split('/')
+  return (
+    segments.length === 3 &&
+    (segments[0] === 'items' || segments[0] === 'avatars') &&
+    segments[1] === userId
+  )
+}

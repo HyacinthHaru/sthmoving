@@ -7,6 +7,7 @@ const statusByErrorCode: Readonly<Record<string, number>> = {
   FORBIDDEN: 403,
   INVALID_REQUEST: 400,
   PAYLOAD_TOO_LARGE: 413,
+  NOT_FOUND: 404,
   NOT_IMPLEMENTED: 404,
   INTERNAL_ERROR: 500,
   SERVICE_UNAVAILABLE: 503,

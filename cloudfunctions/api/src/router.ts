@@ -6,6 +6,7 @@ import { createItemHandlers } from './modules/items'
 import { createLabelHandlers } from './modules/labels'
 import { createMembershipHandlers } from './modules/membership'
 import { createOutboundHandlers } from './modules/outbound'
+import { createStorageHandlers } from './modules/storage'
 import { systemHandlers } from './modules/system'
 import type {
   ApiEvent,
@@ -29,6 +30,7 @@ export function createRouter(deps: ApiDependencies): ApiRouter {
     labels: createLabelHandlers(deps),
     membership: createMembershipHandlers(deps),
     outbound: createOutboundHandlers(deps),
+    storage: createStorageHandlers(deps),
     system: systemHandlers,
   }
 

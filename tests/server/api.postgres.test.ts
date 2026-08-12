@@ -388,6 +388,51 @@ describePostgres('自建后端的 HTTP 接口', () => {
     expect(status).toBe(401)
   })
 
+  it('解析与丢弃自己的文件', async () => {
+    const upload = expectData<{ reference: string; uploadUrl: string }>(
+      (await requestUpload()).body,
+    )
+    await fetch(localise(upload.uploadUrl), { method: 'PUT', body: onePixelPng })
+
+    const urls = expectData<Record<string, string>>(
+      (await call('storage', 'resolve', { fileIds: [upload.reference] })).body,
+    )
+    const signed = urls[upload.reference] as string
+    expect(signed).toContain('signature=')
+    expect((await fetch(localise(signed))).status).toBe(200)
+
+    const discarded = expectData<{ discarded: number }>(
+      (await call('storage', 'discard', { fileIds: [upload.reference] })).body,
+    )
+    expect(discarded.discarded).toBe(1)
+    expect((await fetch(localise(signed))).status).toBe(404)
+  })
+
+  it('不能丢弃他人的文件', async () => {
+    const upload = expectData<{ reference: string; uploadUrl: string }>(
+      (await requestUpload()).body,
+    )
+    await fetch(localise(upload.uploadUrl), { method: 'PUT', body: onePixelPng })
+
+    const other = expectData<{ token: string }>(
+      (await signIn('code-outsider')).body,
+    ).token
+    const { body } = await call(
+      'storage',
+      'discard',
+      { fileIds: [upload.reference] },
+      other,
+    )
+    expect(body).toMatchObject({ ok: false })
+
+    const urls = expectData<Record<string, string>>(
+      (await call('storage', 'resolve', { fileIds: [upload.reference] })).body,
+    )
+    expect((await fetch(localise(urls[upload.reference] as string))).status).toBe(
+      200,
+    )
+  })
+
   it('生成小程序码后凭签名地址取回标签图片', async () => {
     const item = await call('items', 'create', {
       name: '折叠桌',

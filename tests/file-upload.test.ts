@@ -7,7 +7,6 @@ import type {
 import {
   contentTypeForPath,
   uploadFile,
-  uploadFiles,
 } from '../miniprogram/services/file-upload'
 
 function createDependencies(
@@ -65,13 +64,14 @@ describe('两段式上传', () => {
     expect(requestTicket).toHaveBeenCalledWith('AVATAR', 'image/png')
   })
 
-  it('批量上传按顺序返回引用', async () => {
-    await expect(
-      uploadFiles(createDependencies(), 'ITEM_IMAGE', [
-        '/tmp/a.png',
-        '/tmp/b.png',
-      ]),
-    ).resolves.toEqual(['file://items/user-1/1.jpg', 'file://items/user-1/2.jpg'])
+  it('连续上传按顺序返回引用', async () => {
+    const deps = createDependencies()
+    await expect(uploadFile(deps, 'ITEM_IMAGE', '/tmp/a.png')).resolves.toBe(
+      'file://items/user-1/1.jpg',
+    )
+    await expect(uploadFile(deps, 'ITEM_IMAGE', '/tmp/b.png')).resolves.toBe(
+      'file://items/user-1/2.jpg',
+    )
   })
 
   it('上传失败时抛出且不返回引用', async () => {
@@ -81,7 +81,7 @@ describe('两段式上传', () => {
       },
     })
     await expect(
-      uploadFiles(deps, 'ITEM_IMAGE', ['/tmp/a.png']),
+      uploadFile(deps, 'ITEM_IMAGE', '/tmp/a.png'),
     ).rejects.toThrow('网络错误')
   })
 })
