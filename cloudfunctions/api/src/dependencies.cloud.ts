@@ -5,13 +5,17 @@ import { CloudItemRepository } from './items/cloud-repository'
 import { CloudLabelRepository } from './labels/cloud-repository'
 import {
   CloudLabelFileStorage,
+  readMiniProgramEnvironment,
   WeChatMiniProgramCodeGenerator,
 } from './labels/external'
 import { CloudMembershipRepository } from './membership/cloud-repository'
 import { CloudOutboundRepository } from './outbound/cloud-repository'
 import { CloudOutboundImageStorage } from './outbound/storage'
 
-const miniProgramEnvironment = 'develop' as const
+const miniProgramEnvironment = readMiniProgramEnvironment(
+  process.env['MINI_PROGRAM_ENVIRONMENT'],
+  'develop',
+)
 
 export function createCloudDependencies(): ApiDependencies {
   let membership: CloudMembershipRepository | undefined

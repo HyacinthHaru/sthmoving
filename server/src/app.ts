@@ -13,7 +13,6 @@ import { migrate } from './db/migrate'
 import { createPool } from './db/pool'
 import type { ExternalDependencies } from './dependencies.pg'
 import { createPgDependencies } from './dependencies.pg'
-import { unavailableExternalDependencies } from './external/unavailable'
 import type { HttpRoute } from './http/server'
 import { createHttpApi } from './http/server'
 import { createFileServices } from './storage/external'
@@ -21,10 +20,12 @@ import { PostgresFileRegistry } from './storage/files'
 import { LocalFileStorage } from './storage/local'
 import { createFileRoutes } from './storage/routes'
 import { FileUrlSigner } from './storage/signing'
+import { WeChatAccessTokenProvider } from './wechat/access-token'
+import { HttpMiniProgramCodeGenerator } from './wechat/mini-program-code'
 
 export interface ServerOverrides {
   authenticate?: (request: IncomingMessage) => Promise<RequestContext>
-  external?: ExternalDependencies
+  external?: Partial<ExternalDependencies>
   routes?: readonly HttpRoute[]
   wechat?: WeChatAuthClient
 }
@@ -75,20 +76,23 @@ export async function startServer(
       downloadTtlMilliseconds: config.fileUrlTtlSeconds * 1000,
     })
 
-    const dependencies = createPgDependencies(
-      pool,
-      overrides.external ?? { ...unavailableExternalDependencies, ...files },
-    )
+    const credentials = {
+      appId: config.wechatAppId,
+      appSecret: config.wechatAppSecret,
+    }
+    const accessTokens = new WeChatAccessTokenProvider(credentials)
+
+    const dependencies = createPgDependencies(pool, {
+      ...files,
+      miniProgramCode: new HttpMiniProgramCodeGenerator(accessTokens),
+      miniProgramEnvironment: config.miniProgramEnvironment,
+      ...overrides.external,
+    })
     const sessions = new PostgresSessionStore(
       pool,
       config.sessionTtlDays * 24 * 60 * 60 * 1000,
     )
-    const wechat =
-      overrides.wechat ??
-      new HttpWeChatAuthClient({
-        appId: config.wechatAppId,
-        appSecret: config.wechatAppSecret,
-      })
+    const wechat = overrides.wechat ?? new HttpWeChatAuthClient(credentials)
     const authenticate =
       overrides.authenticate ?? createBearerAuthenticator(sessions)
 

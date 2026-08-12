@@ -1,3 +1,6 @@
+import type { MiniProgramEnvironment } from '../../cloudfunctions/api/src/labels/external'
+import { readMiniProgramEnvironment } from '../../cloudfunctions/api/src/labels/external'
+
 export interface ServerConfig {
   readonly port: number
   readonly databaseUrl: string
@@ -11,6 +14,7 @@ export interface ServerConfig {
   readonly fileSigningSecret: string
   readonly fileUrlTtlSeconds: number
   readonly uploadUrlTtlSeconds: number
+  readonly miniProgramEnvironment: MiniProgramEnvironment
 }
 
 export function requireEnv(
@@ -71,5 +75,9 @@ export function readServerConfig(
     fileSigningSecret: requireEnv(env, 'FILE_SIGNING_SECRET'),
     fileUrlTtlSeconds: readNumber(env, 'FILE_URL_TTL_SECONDS', 600),
     uploadUrlTtlSeconds: readNumber(env, 'UPLOAD_URL_TTL_SECONDS', 300),
+    miniProgramEnvironment: readMiniProgramEnvironment(
+      env['MINI_PROGRAM_ENVIRONMENT'],
+      'release',
+    ),
   }
 }

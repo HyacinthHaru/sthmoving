@@ -103,8 +103,12 @@ describePostgres('自建后端的 HTTP 接口', () => {
         fileSigningSecret: 'file-signing-secret-for-automated-tests',
         fileUrlTtlSeconds: 600,
         uploadUrlTtlSeconds: 300,
+        miniProgramEnvironment: 'release',
       },
-      { wechat },
+      {
+        wechat,
+        external: { miniProgramCode: { generate: async () => onePixelPng } },
+      },
     )
     baseUrl = `http://127.0.0.1:${started.port}`
   })
@@ -374,6 +378,30 @@ describePostgres('自建后端的 HTTP 接口', () => {
   it('未登录不能申请上传', async () => {
     const { status } = await requestUpload(null)
     expect(status).toBe(401)
+  })
+
+  it('生成小程序码后凭签名地址取回标签图片', async () => {
+    await call('auth', 'bootstrapOwner', { token: bootstrapToken })
+    const item = await call('items', 'create', {
+      name: '折叠桌',
+      images: [],
+      description: '',
+      quantityMode: 'SINGLE',
+      quantity: 1,
+      newCategoryName: '活动器材',
+      commitSummary: '首次登记物品',
+    })
+    const itemId = expectData<{ id: string }>(item.body).id
+
+    const generated = await call('labels', 'generateMiniProgramCode', { itemId })
+    const label = expectData<{ status: string; fileUrl: string }>(generated.body)
+    expect(label.status).toBe('READY')
+    expect(label.fileUrl).toContain('/files/labels/')
+    expect(label.fileUrl).toContain('signature=')
+
+    const download = await fetch(localise(label.fileUrl))
+    expect(download.status).toBe(200)
+    expect(Buffer.from(await download.arrayBuffer())).toEqual(onePixelPng)
   })
 
   it('权限不足的成员不能创建分类', async () => {

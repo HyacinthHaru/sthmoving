@@ -83,6 +83,7 @@ docker compose -f docker-compose.dev.yml up
 | `FILE_SIGNING_SECRET` | 无，必填 | 文件地址签名密钥，至少 32 位 |
 | `FILE_URL_TTL_SECONDS` | 600 | 下载地址有效期 |
 | `UPLOAD_URL_TTL_SECONDS` | 300 | 上传地址有效期 |
+| `MINI_PROGRAM_ENVIRONMENT` | release | 小程序码指向的版本，可选 develop、trial、release |
 | `OWNER_BOOTSTRAP_TOKEN` | 无 | 首位所有者初始化口令，至少 16 位 |
 
 只跑数据库时使用 `docker compose -f docker-compose.test.yml up -d`，并把

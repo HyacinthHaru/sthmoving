@@ -2,6 +2,21 @@ import cloud from 'wx-server-sdk'
 
 export type MiniProgramEnvironment = 'develop' | 'trial' | 'release'
 
+export const miniProgramEnvironments: readonly MiniProgramEnvironment[] = [
+  'develop',
+  'trial',
+  'release',
+]
+
+export function readMiniProgramEnvironment(
+  value: string | undefined,
+  fallback: MiniProgramEnvironment,
+): MiniProgramEnvironment {
+  return miniProgramEnvironments.includes(value as MiniProgramEnvironment)
+    ? (value as MiniProgramEnvironment)
+    : fallback
+}
+
 export interface GenerateMiniProgramCodeInput {
   page: 'pages/item-detail/index'
   scene: string
