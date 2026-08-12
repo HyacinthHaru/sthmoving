@@ -186,7 +186,10 @@ export class LabelService {
           '小程序码记录不存在',
         )
       }
-      if (label.generation_token !== generationToken) {
+      if (
+        label.generation_token !== generationToken ||
+        label.status !== 'PENDING'
+      ) {
         return label
       }
 

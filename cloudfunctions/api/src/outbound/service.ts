@@ -127,10 +127,7 @@ export class OutboundService {
         const applicant = await unitOfWork.getUser(request.applicant_id)
         const item = await unitOfWork.getItem(request.item_id)
         if (!applicant || !item) {
-          throw new ApiException(
-            'OUTBOUND_DATA_INVALID',
-            '离库申请关联的用户或物品不存在',
-          )
+          continue
         }
         result.push({
           ...toPublicRequest(request),

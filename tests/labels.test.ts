@@ -80,9 +80,11 @@ class InMemoryLabelUnitOfWork implements LabelUnitOfWork {
 class FakeGenerator implements MiniProgramCodeGenerator {
   calls: GenerateMiniProgramCodeInput[] = []
   error: Error | null = null
+  onGenerate: (() => void) | null = null
 
   generate(input: GenerateMiniProgramCodeInput): Promise<Buffer> {
     this.calls.push(structuredClone(input))
+    this.onGenerate?.()
     if (this.error) {
       return Promise.reject(this.error)
     }
@@ -276,6 +278,21 @@ describe('物品小程序码服务', () => {
       attemptCount: 2,
     })
     expect(generator.calls).toHaveLength(2)
+  })
+
+  it('生成期间被作废的标签不会被生成结果覆盖', async () => {
+    const { repository, generator, service } = prepare()
+    generator.onGenerate = () => {
+      const label = repository.labels.get('item-label-item-1')!
+      repository.labels.set(label._id, { ...label, status: 'VOID' })
+    }
+
+    const result = await service.generate('member-openid', 'item-1')
+
+    expect(result.status).toBe('VOID')
+    expect(
+      repository.labels.get('item-label-item-1'),
+    ).not.toHaveProperty('file_id')
   })
 
   it('为阶段 3 以前登记的物品补建唯一标签记录', async () => {

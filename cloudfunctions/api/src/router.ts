@@ -14,11 +14,6 @@ import type {
   RequestContext,
 } from './types'
 
-const plannedModules = new Set([
-  'outbound',
-  'notifications',
-])
-
 const handlers: Readonly<Record<string, Readonly<Record<string, ApiHandler>>>> = {
   auth: authHandlers,
   categories: categoryHandlers,
@@ -41,10 +36,10 @@ export async function route(
 
     const handler = handlers[event.module]?.[event.action]
     if (!handler) {
-      const message = plannedModules.has(event.module)
-        ? `${event.module}.${event.action} 尚未实现`
-        : `未知模块：${event.module}`
-      throw new ApiException('NOT_IMPLEMENTED', message)
+      throw new ApiException(
+        'NOT_IMPLEMENTED',
+        `${event.module}.${event.action} 尚未实现`,
+      )
     }
 
     return {

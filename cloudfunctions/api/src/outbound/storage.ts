@@ -4,12 +4,19 @@ export interface OutboundImageStorage {
   delete(fileIds: readonly string[]): Promise<void>
 }
 
+const deleteBatchSize = 50
+
 export class CloudOutboundImageStorage implements OutboundImageStorage {
   async delete(fileIds: readonly string[]): Promise<void> {
     const uniqueFileIds = [...new Set(fileIds.filter(Boolean))]
-    if (uniqueFileIds.length === 0) {
-      return
+    for (
+      let offset = 0;
+      offset < uniqueFileIds.length;
+      offset += deleteBatchSize
+    ) {
+      await cloud.deleteFile({
+        fileList: uniqueFileIds.slice(offset, offset + deleteBatchSize),
+      })
     }
-    await cloud.deleteFile({ fileList: uniqueFileIds })
   }
 }

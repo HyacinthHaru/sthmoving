@@ -155,11 +155,8 @@ export class CategoryService {
         await unitOfWork.getUserByOpenid(openid),
         openid,
       )
-      const category = await getMutableCategory(unitOfWork, categoryId)
-      if (
-        (category.item_reference_count ?? 0) > 0 ||
-        (await unitOfWork.hasItemReference(categoryId))
-      ) {
+      await getMutableCategory(unitOfWork, categoryId)
+      if (await unitOfWork.hasItemReference(categoryId)) {
         throw new ApiException(
           'CATEGORY_IN_USE',
           '该分类已被物品使用，只能停用',
