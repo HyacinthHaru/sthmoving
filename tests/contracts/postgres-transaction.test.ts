@@ -105,7 +105,7 @@ describePostgres('PostgreSQL 事务语义', () => {
         await client.query(insertUser, ['user-2', 'openid-2', now])
         await client.query(insertUser, ['user-3', 'openid-1', now])
       }),
-    ).rejects.toMatchObject({ code: '23505' })
+    ).rejects.toMatchObject({ code: 'IDENTITY_CONFLICT' })
 
     const result = await pool.query('SELECT id FROM users')
     expect(result.rows.map((row) => row['id'])).toEqual(['user-1'])

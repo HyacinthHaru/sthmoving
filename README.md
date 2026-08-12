@@ -57,9 +57,16 @@ docker compose -f docker-compose.dev.yml up
 | `GET /health` | 无 | 数据库连通状态 |
 | `POST /auth/session` | 无 | 用 `{code}` 换取访问令牌 |
 | `POST /api` | Bearer 令牌 | 与云函数相同的 `{module, action, payload}` |
+| `POST /files/uploads` | Bearer 令牌 | 申请上传，返回文件引用和带签名的上传地址 |
+| `PUT /files/<路径>` | 上传签名 | 写入图片，只接受 JPEG、PNG、WebP |
+| `GET /files/<路径>` | 下载签名 | 读取图片 |
 
 访问令牌是随机串，服务端只保存它的 SHA-256 摘要；权限每次请求都回数据库查，成员
-被停用后立即失效，不必等令牌过期。可用的环境变量：
+被停用后立即失效，不必等令牌过期。
+
+文件一律走签名地址，没有任何一条路径可以裸取。签名覆盖路径、用途和过期时间，
+下载签名不能用来覆盖文件。物品图片和头像的引用形如 `file://items/<用户>/<随机>.jpg`，
+上传时按内容首字节判定真实格式，压不进白名单的内容直接拒绝。可用的环境变量：
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
@@ -71,6 +78,11 @@ docker compose -f docker-compose.dev.yml up
 | `SESSION_TTL_DAYS` | 30 | 访问令牌有效期 |
 | `WECHAT_APP_ID` | 无，必填 | 小程序 AppID |
 | `WECHAT_APP_SECRET` | 无，必填 | 小程序密钥，只允许放在服务端环境变量 |
+| `PUBLIC_BASE_URL` | 无，必填 | 对外访问地址，用于拼接文件地址 |
+| `STORAGE_ROOT` | storage | 文件存储根目录 |
+| `FILE_SIGNING_SECRET` | 无，必填 | 文件地址签名密钥，至少 32 位 |
+| `FILE_URL_TTL_SECONDS` | 600 | 下载地址有效期 |
+| `UPLOAD_URL_TTL_SECONDS` | 300 | 上传地址有效期 |
 | `OWNER_BOOTSTRAP_TOKEN` | 无 | 首位所有者初始化口令，至少 16 位 |
 
 只跑数据库时使用 `docker compose -f docker-compose.test.yml up -d`，并把

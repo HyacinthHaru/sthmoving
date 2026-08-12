@@ -6,6 +6,11 @@ export interface ServerConfig {
   readonly sessionTtlDays: number
   readonly wechatAppId: string
   readonly wechatAppSecret: string
+  readonly publicBaseUrl: string
+  readonly storageRoot: string
+  readonly fileSigningSecret: string
+  readonly fileUrlTtlSeconds: number
+  readonly uploadUrlTtlSeconds: number
 }
 
 export function requireEnv(
@@ -61,5 +66,10 @@ export function readServerConfig(
     sessionTtlDays: readNumber(env, 'SESSION_TTL_DAYS', 30),
     wechatAppId: requireEnv(env, 'WECHAT_APP_ID'),
     wechatAppSecret: requireEnv(env, 'WECHAT_APP_SECRET'),
+    publicBaseUrl: requireEnv(env, 'PUBLIC_BASE_URL'),
+    storageRoot: env['STORAGE_ROOT'] ?? 'storage',
+    fileSigningSecret: requireEnv(env, 'FILE_SIGNING_SECRET'),
+    fileUrlTtlSeconds: readNumber(env, 'FILE_URL_TTL_SECONDS', 600),
+    uploadUrlTtlSeconds: readNumber(env, 'UPLOAD_URL_TTL_SECONDS', 300),
   }
 }

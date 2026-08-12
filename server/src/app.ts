@@ -16,6 +16,11 @@ import { createPgDependencies } from './dependencies.pg'
 import { unavailableExternalDependencies } from './external/unavailable'
 import type { HttpRoute } from './http/server'
 import { createHttpApi } from './http/server'
+import { createFileServices } from './storage/external'
+import { PostgresFileRegistry } from './storage/files'
+import { LocalFileStorage } from './storage/local'
+import { createFileRoutes } from './storage/routes'
+import { FileUrlSigner } from './storage/signing'
 
 export interface ServerOverrides {
   authenticate?: (request: IncomingMessage) => Promise<RequestContext>
@@ -57,9 +62,22 @@ export async function startServer(
       await migrate(pool)
     }
 
+    const storage = new LocalFileStorage(config.storageRoot)
+    const registry = new PostgresFileRegistry(pool)
+    const signer = new FileUrlSigner(
+      config.fileSigningSecret,
+      config.publicBaseUrl,
+    )
+    const files = createFileServices({
+      storage,
+      registry,
+      signer,
+      downloadTtlMilliseconds: config.fileUrlTtlSeconds * 1000,
+    })
+
     const dependencies = createPgDependencies(
       pool,
-      overrides.external ?? unavailableExternalDependencies,
+      overrides.external ?? { ...unavailableExternalDependencies, ...files },
     )
     const sessions = new PostgresSessionStore(
       pool,
@@ -71,10 +89,12 @@ export async function startServer(
         appId: config.wechatAppId,
         appSecret: config.wechatAppSecret,
       })
+    const authenticate =
+      overrides.authenticate ?? createBearerAuthenticator(sessions)
 
     const server = createHttpApi({
       route: createRouter(dependencies),
-      authenticate: overrides.authenticate ?? createBearerAuthenticator(sessions),
+      authenticate,
       checkHealth: async () => {
         await pool.query('SELECT 1')
       },
@@ -83,6 +103,13 @@ export async function startServer(
           sessions,
           wechat,
           membership: dependencies.membership,
+        }),
+        ...createFileRoutes({
+          storage,
+          registry,
+          signer,
+          authenticate,
+          uploadTtlMilliseconds: config.uploadUrlTtlSeconds * 1000,
         }),
         ...(overrides.routes ?? []),
       ],

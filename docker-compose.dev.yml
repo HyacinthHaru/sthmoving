@@ -24,12 +24,16 @@ services:
       DATABASE_URL: postgres://sthmoving:sthmoving@postgres:5432/sthmoving
       WECHAT_APP_ID: ${WECHAT_APP_ID:?}
       WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:?}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://127.0.0.1:8080}
+      STORAGE_ROOT: /var/lib/sthmoving/files
+      FILE_SIGNING_SECRET: ${FILE_SIGNING_SECRET:?}
       OWNER_BOOTSTRAP_TOKEN: ${OWNER_BOOTSTRAP_TOKEN:-}
     ports:
       - '8080:8080'
     volumes:
       - .:/app
       - api-node-modules:/app/node_modules
+      - api-files:/var/lib/sthmoving/files
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,3 +41,4 @@ services:
 volumes:
   postgres-data:
   api-node-modules:
+  api-files:

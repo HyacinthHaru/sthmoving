@@ -1,3 +1,7 @@
+import { mkdtemp } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
 import { afterAll, beforeAll, beforeEach, expect, it } from 'vitest'
 
 import { ApiException } from '../../cloudfunctions/api/src/errors'
@@ -5,8 +9,6 @@ import type { ApiResponse } from '../../cloudfunctions/api/src/types'
 import { startServer } from '../../server/src/app'
 import type { StartedServer } from '../../server/src/app'
 import type { WeChatAuthClient } from '../../server/src/auth/wechat'
-import type { ExternalDependencies } from '../../server/src/dependencies.pg'
-import { unavailableExternalDependencies } from '../../server/src/external/unavailable'
 import {
   closeTestPool,
   describePostgres,
@@ -16,12 +18,10 @@ import {
 
 const bootstrapToken = 'bootstrap-token-for-test'
 
-const external: ExternalDependencies = {
-  ...unavailableExternalDependencies,
-  resolveFileUrls: async (fileIds) =>
-    new Map(fileIds.map((fileId) => [fileId, `https://files.test/${fileId}`])),
-  resolveFileUrl: async (fileId) => `https://files.test/${fileId}`,
-}
+const onePixelPng = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+)
 
 const wechat: WeChatAuthClient = {
   codeToOpenid: async (code) => {
@@ -36,6 +36,13 @@ describePostgres('自建后端的 HTTP 接口', () => {
   let started: StartedServer
   let baseUrl: string
   let ownerToken: string
+
+  function localise(signedUrl: string): string {
+    const url = new URL(signedUrl)
+    url.protocol = 'http:'
+    url.host = `127.0.0.1:${started.port}`
+    return url.toString()
+  }
 
   async function signIn(code: string): Promise<{
     status: number
@@ -91,8 +98,13 @@ describePostgres('自建后端的 HTTP 接口', () => {
         sessionTtlDays: 30,
         wechatAppId: 'wxtest',
         wechatAppSecret: 'unused',
+        publicBaseUrl: 'https://files.test',
+        storageRoot: await mkdtemp(join(tmpdir(), 'sthmoving-files-')),
+        fileSigningSecret: 'file-signing-secret-for-automated-tests',
+        fileUrlTtlSeconds: 600,
+        uploadUrlTtlSeconds: 300,
       },
-      { external, wechat },
+      { wechat },
     )
     baseUrl = `http://127.0.0.1:${started.port}`
   })
@@ -229,6 +241,139 @@ describePostgres('自建后端的 HTTP 接口', () => {
       ok: false,
       error: { code: 'INVALID_BOOTSTRAP_TOKEN' },
     })
+  })
+
+  async function requestUpload(
+    token: string | null = ownerToken,
+  ): Promise<{ status: number; body: ApiResponse }> {
+    const response = await fetch(`${baseUrl}/files/uploads`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ purpose: 'ITEM_IMAGE', contentType: 'image/png' }),
+    })
+    return {
+      status: response.status,
+      body: (await response.json()) as ApiResponse,
+    }
+  }
+
+  it('两段式上传后凭签名地址取回文件', async () => {
+    const upload = expectData<{ reference: string; uploadUrl: string }>(
+      (await requestUpload()).body,
+    )
+    expect(upload.reference.startsWith('file://items/')).toBe(true)
+
+    const put = await fetch(localise(upload.uploadUrl), {
+      method: 'PUT',
+      body: onePixelPng,
+    })
+    expect(put.status).toBe(200)
+
+    const detail = await call('items', 'create', {
+      name: '折叠桌',
+      images: [upload.reference],
+      description: '',
+      quantityMode: 'SINGLE',
+      quantity: 1,
+      newCategoryName: '活动器材',
+      commitSummary: '首次登记物品',
+    })
+    const itemId = expectData<{ id: string }>(detail.body).id
+    const loaded = expectData<{ images: string[] }>(
+      (await call('items', 'detail', { itemId })).body,
+    )
+    const imageUrl = loaded.images[0] as string
+    expect(imageUrl).toContain('signature=')
+
+    const download = await fetch(localise(imageUrl))
+    expect(download.status).toBe(200)
+    expect(download.headers.get('content-type')).toBe('image/png')
+    expect(download.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(Buffer.from(await download.arrayBuffer())).toEqual(onePixelPng)
+  })
+
+  it('未签名的文件地址被拒绝', async () => {
+    const upload = expectData<{ reference: string; uploadUrl: string }>(
+      (await requestUpload()).body,
+    )
+    await fetch(localise(upload.uploadUrl), { method: 'PUT', body: onePixelPng })
+
+    const path = upload.reference.slice('file://'.length)
+    const response = await fetch(`${baseUrl}/files/${path}`)
+    expect(response.status).toBe(403)
+  })
+
+  it('被篡改的签名被拒绝', async () => {
+    const upload = expectData<{ reference: string; uploadUrl: string }>(
+      (await requestUpload()).body,
+    )
+    await fetch(localise(upload.uploadUrl), { method: 'PUT', body: onePixelPng })
+
+    const forged = new URL(
+      `${baseUrl}/files/${upload.reference.slice('file://'.length)}`,
+    )
+    forged.searchParams.set('mode', 'download')
+    forged.searchParams.set(
+      'expires',
+      String(Math.floor(Date.now() / 1000) + 600),
+    )
+    forged.searchParams.set('signature', 'f'.repeat(64))
+
+    expect((await fetch(forged)).status).toBe(403)
+  })
+
+  it('下载签名不能用于覆盖文件', async () => {
+    const upload = expectData<{ reference: string; uploadUrl: string }>(
+      (await requestUpload()).body,
+    )
+    await fetch(localise(upload.uploadUrl), { method: 'PUT', body: onePixelPng })
+
+    const download = new URL(
+      localise(
+        await (async () => {
+          const item = await call('items', 'create', {
+            name: '折叠桌',
+            images: [upload.reference],
+            description: '',
+            quantityMode: 'SINGLE',
+            quantity: 1,
+            newCategoryName: '活动器材',
+            commitSummary: '首次登记物品',
+          })
+          const itemId = expectData<{ id: string }>(item.body).id
+          const detail = await call('items', 'detail', { itemId })
+          return expectData<{ images: string[] }>(detail.body).images[0] as string
+        })(),
+      ),
+    )
+
+    const overwrite = await fetch(download, {
+      method: 'PUT',
+      body: Buffer.from('覆盖内容', 'utf8'),
+    })
+    expect(overwrite.status).toBe(403)
+  })
+
+  it('拒绝非图片内容', async () => {
+    const upload = expectData<{ uploadUrl: string }>(
+      (await requestUpload()).body,
+    )
+    const response = await fetch(localise(upload.uploadUrl), {
+      method: 'PUT',
+      body: Buffer.from('<svg onload=alert(1)>', 'utf8'),
+    })
+    expect(await response.json()).toMatchObject({
+      ok: false,
+      error: { code: 'INVALID_REQUEST' },
+    })
+  })
+
+  it('未登录不能申请上传', async () => {
+    const { status } = await requestUpload(null)
+    expect(status).toBe(401)
   })
 
   it('权限不足的成员不能创建分类', async () => {
