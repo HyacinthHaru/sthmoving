@@ -330,7 +330,9 @@ export function describeLabelRepositoryContract(
     })
 
     it('缺省可选字段的标签往返后仍视为未设置', async () => {
-      const repository = await harness.create()
+      const repository = await harness.create({
+        items: [createItem('item-1')],
+      })
 
       await setLabel(repository, createBareLabel('item-1', 'A1B2C3D4E5F6'))
 
@@ -357,7 +359,9 @@ export function describeLabelRepositoryContract(
     })
 
     it('带可选字段的标签往返后保留原值', async () => {
-      const repository = await harness.create()
+      const repository = await harness.create({
+        items: [createItem('item-1')],
+      })
 
       await setLabel(
         repository,

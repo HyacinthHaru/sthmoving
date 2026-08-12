@@ -322,7 +322,9 @@ export function describeMembershipRepositoryContract(
     })
 
     it('写入用户后可读回全部字段', async () => {
-      const repository = await harness.create()
+      const repository = await harness.create({
+        users: [createUser('user-owner')],
+      })
 
       await repository.runTransaction((unitOfWork) =>
         unitOfWork.setUser(

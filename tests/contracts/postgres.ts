@@ -42,7 +42,12 @@ function placeholderCategory(id: string): CategoryRecord {
   }
 }
 
-function placeholderItem(id: string, code: string): ItemRecord {
+function placeholderItem(
+  id: string,
+  code: string,
+  categoryId: string,
+  ownerId: string,
+): ItemRecord {
   return {
     _id: id,
     code,
@@ -51,12 +56,12 @@ function placeholderItem(id: string, code: string): ItemRecord {
     description: '',
     quantity_mode: 'SINGLE',
     quantity: 1,
-    category_id: 'seeded-category',
+    category_id: categoryId,
     status: 'ACTIVE',
     version: 1,
-    registered_by: 'seeded-user',
+    registered_by: ownerId,
     registered_at: placeholderTime,
-    updated_by: 'seeded-user',
+    updated_by: ownerId,
     updated_at: placeholderTime,
   }
 }
@@ -100,7 +105,7 @@ async function seedDatabase(pool: Pool, seed: SeedData): Promise<void> {
   ])
 
   const knownUsers = new Set(users.map((row) => row._id))
-  for (const id of [...referencedUsers, 'seeded-user']) {
+  for (const id of referencedUsers) {
     if (!knownUsers.has(id)) {
       users.push(placeholderUser(id))
       knownUsers.add(id)
@@ -108,7 +113,7 @@ async function seedDatabase(pool: Pool, seed: SeedData): Promise<void> {
   }
 
   const knownCategories = new Set(categories.map((row) => row._id))
-  for (const id of [...referencedCategories, 'seeded-category']) {
+  for (const id of referencedCategories) {
     if (!knownCategories.has(id)) {
       categories.push(placeholderCategory(id))
       knownCategories.add(id)
@@ -116,19 +121,29 @@ async function seedDatabase(pool: Pool, seed: SeedData): Promise<void> {
   }
 
   const knownItems = new Set(items.map((row) => row._id))
-  const usedCodes = new Set(items.map((row) => row.code))
-  let codeIndex = 0
-  for (const id of referencedItems) {
-    if (knownItems.has(id)) {
-      continue
+  const missingItems = referencedItems.filter((id) => !knownItems.has(id))
+  if (missingItems.length > 0) {
+    const ownerId = users[0]?._id ?? 'seeded-user'
+    if (!knownUsers.has(ownerId)) {
+      users.push(placeholderUser(ownerId))
+      knownUsers.add(ownerId)
     }
-    let code = placeholderCode(codeIndex++)
-    while (usedCodes.has(code)) {
-      code = placeholderCode(codeIndex++)
+    const categoryId = categories[0]?._id ?? 'seeded-category'
+    if (!knownCategories.has(categoryId)) {
+      categories.push(placeholderCategory(categoryId))
+      knownCategories.add(categoryId)
     }
-    usedCodes.add(code)
-    items.push(placeholderItem(id, code))
-    knownItems.add(id)
+    const usedCodes = new Set(items.map((row) => row.code))
+    let codeIndex = 0
+    for (const id of missingItems) {
+      let code = placeholderCode(codeIndex++)
+      while (usedCodes.has(code)) {
+        code = placeholderCode(codeIndex++)
+      }
+      usedCodes.add(code)
+      items.push(placeholderItem(id, code, categoryId, ownerId))
+      knownItems.add(id)
+    }
   }
 
   for (const user of users) {
