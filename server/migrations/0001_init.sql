@@ -12,7 +12,7 @@ CREATE TABLE users (
   status text NOT NULL
     CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'DISABLED')),
   joined_at timestamptz(3),
-  reviewed_by text COLLATE "C" REFERENCES users (id) DEFERRABLE INITIALLY DEFERRED,
+  reviewed_by text COLLATE "C",
   reviewed_at timestamptz(3),
   created_at timestamptz(3) NOT NULL,
   updated_at timestamptz(3) NOT NULL
@@ -32,14 +32,10 @@ CREATE TABLE join_requests (
   status text NOT NULL CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
   review_comment text
     CHECK (review_comment IS NULL OR char_length(review_comment) BETWEEN 1 AND 250),
-  reviewed_by text COLLATE "C" REFERENCES users (id),
+  reviewed_by text COLLATE "C",
   reviewed_at timestamptz(3),
   created_at timestamptz(3) NOT NULL,
-  updated_at timestamptz(3) NOT NULL,
-  CONSTRAINT join_requests_reviewed_fields
-    CHECK (status = 'PENDING' OR (reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL)),
-  CONSTRAINT join_requests_rejected_comment
-    CHECK (status <> 'REJECTED' OR review_comment IS NOT NULL)
+  updated_at timestamptz(3) NOT NULL
 );
 
 CREATE UNIQUE INDEX join_requests_one_pending_per_applicant
@@ -55,15 +51,11 @@ CREATE TABLE categories (
   is_preset boolean NOT NULL DEFAULT false,
   sort_order integer NOT NULL DEFAULT 1000 CHECK (sort_order >= 0),
   item_reference_count integer CHECK (item_reference_count >= 0),
-  created_by text COLLATE "C" REFERENCES users (id),
+  created_by text COLLATE "C",
   created_at timestamptz(3) NOT NULL,
   updated_at timestamptz(3) NOT NULL,
-  deleted_by text COLLATE "C" REFERENCES users (id),
-  deleted_at timestamptz(3),
-  CONSTRAINT categories_preset_has_no_creator
-    CHECK (NOT is_preset OR created_by IS NULL),
-  CONSTRAINT categories_deleted_fields
-    CHECK (status <> 'DELETED' OR deleted_at IS NOT NULL)
+  deleted_by text COLLATE "C",
+  deleted_at timestamptz(3)
 );
 
 CREATE UNIQUE INDEX categories_normalized_name_live
@@ -82,21 +74,16 @@ CREATE TABLE items (
   status text NOT NULL
     CHECK (status IN ('ACTIVE', 'OUTBOUND_PENDING', 'OFF_SHELF', 'DELETED')),
   version integer NOT NULL CHECK (version >= 1),
-  registered_by text NOT NULL COLLATE "C" REFERENCES users (id),
+  registered_by text NOT NULL COLLATE "C",
   registered_at timestamptz(3) NOT NULL,
-  updated_by text NOT NULL COLLATE "C" REFERENCES users (id),
+  updated_by text NOT NULL COLLATE "C",
   updated_at timestamptz(3) NOT NULL,
-  off_shelf_by text COLLATE "C" REFERENCES users (id),
+  off_shelf_by text COLLATE "C",
   off_shelf_at timestamptz(3),
-  deleted_by text COLLATE "C" REFERENCES users (id),
+  deleted_by text COLLATE "C",
   deleted_at timestamptz(3),
   CONSTRAINT items_single_quantity
-    CHECK (quantity_mode <> 'SINGLE' OR quantity = 1),
-  CONSTRAINT items_off_shelf_fields
-    CHECK (status IN ('OFF_SHELF', 'DELETED')
-           OR (off_shelf_by IS NULL AND off_shelf_at IS NULL)),
-  CONSTRAINT items_deleted_fields
-    CHECK (status <> 'DELETED' OR deleted_at IS NOT NULL)
+    CHECK (quantity_mode <> 'SINGLE' OR quantity = 1)
 );
 
 CREATE INDEX items_status_updated_at_id ON items (status, updated_at DESC, id DESC);
@@ -125,7 +112,7 @@ CREATE TABLE item_labels (
 CREATE TABLE item_operation_logs (
   id text PRIMARY KEY COLLATE "C",
   item_id text NOT NULL COLLATE "C" REFERENCES items (id) DEFERRABLE INITIALLY DEFERRED,
-  operator_id text NOT NULL COLLATE "C" REFERENCES users (id),
+  operator_id text NOT NULL COLLATE "C",
   action_type text NOT NULL
     CHECK (action_type IN ('CREATE', 'UPDATE', 'OUTBOUND_REQUEST',
                            'OUTBOUND_APPROVE', 'OUTBOUND_REJECT',
@@ -148,16 +135,12 @@ CREATE TABLE outbound_requests (
   applicant_id text NOT NULL COLLATE "C" REFERENCES users (id),
   reason text NOT NULL CHECK (char_length(reason) BETWEEN 1 AND 250),
   status text NOT NULL CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
-  reviewer_id text COLLATE "C" REFERENCES users (id),
+  reviewer_id text COLLATE "C",
   review_summary text
     CHECK (review_summary IS NULL OR char_length(review_summary) BETWEEN 1 AND 250),
   reviewed_at timestamptz(3),
   created_at timestamptz(3) NOT NULL,
-  updated_at timestamptz(3) NOT NULL,
-  CONSTRAINT outbound_requests_reviewed_fields
-    CHECK (status = 'PENDING' OR (reviewer_id IS NOT NULL AND reviewed_at IS NOT NULL)),
-  CONSTRAINT outbound_requests_rejected_summary
-    CHECK (status <> 'REJECTED' OR review_summary IS NOT NULL)
+  updated_at timestamptz(3) NOT NULL
 );
 
 CREATE UNIQUE INDEX outbound_requests_one_pending_per_item

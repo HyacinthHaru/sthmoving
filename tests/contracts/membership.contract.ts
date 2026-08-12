@@ -29,12 +29,12 @@ export function describeMembershipRepositoryContract(
   harness: RepositoryHarness<MembershipRepository>,
 ): void {
   describe(`MembershipRepository 契约（${harness.name}）`, () => {
-    it('统计所有者时返回真实数量而非是否存在', async () => {
+    it('统计所有者时只计入所有者角色', async () => {
       const repository = await harness.create({
         users: [
           createUser('user-owner-1', { role: 'OWNER' }),
-          createUser('user-owner-2', { role: 'OWNER' }),
-          createUser('user-owner-3', { role: 'OWNER' }),
+          createUser('user-admin-1', { role: 'ADMIN' }),
+          createUser('user-member-1', { role: 'MEMBER' }),
           createUser('user-manager', { role: 'MANAGER' }),
           createUser('user-member'),
         ],
@@ -42,7 +42,7 @@ export function describeMembershipRepositoryContract(
 
       await expect(
         repository.runTransaction((unitOfWork) => unitOfWork.countOwners()),
-      ).resolves.toBe(3)
+      ).resolves.toBe(1)
     })
 
     it('没有所有者时统计结果为 0', async () => {

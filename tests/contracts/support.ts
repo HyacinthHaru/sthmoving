@@ -60,13 +60,21 @@ export function createCategory(
   }
 }
 
+function codeFromId(id: string): string {
+  let hash = 0
+  for (const char of id) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+  }
+  return hash.toString(16).toUpperCase().padStart(12, '0').slice(-12)
+}
+
 export function createItem(
   id: string,
   overrides: Partial<ItemRecord> = {},
 ): ItemRecord {
   return {
     _id: id,
-    code: id.replace(/[^0-9A-F]/gi, '').toUpperCase().padEnd(12, '0').slice(0, 12),
+    code: codeFromId(id),
     name: id,
     images: [],
     description: '',

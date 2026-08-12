@@ -80,22 +80,8 @@ async function seedDatabase(pool: Pool, seed: SeedData): Promise<void> {
   const items = [...(seed.items ?? [])]
 
   const referencedUsers = collect([
-    ...categories.flatMap((row) => [row.created_by, row.deleted_by]),
-    ...items.flatMap((row) => [
-      row.registered_by,
-      row.updated_by,
-      row.off_shelf_by,
-      row.deleted_by,
-    ]),
-    ...(seed.operationLogs ?? []).map((row) => row.operator_id),
-    ...(seed.joinRequests ?? []).flatMap((row) => [
-      row.applicant_id,
-      row.reviewed_by,
-    ]),
-    ...(seed.outboundRequests ?? []).flatMap((row) => [
-      row.applicant_id,
-      row.reviewer_id,
-    ]),
+    ...(seed.joinRequests ?? []).map((row) => row.applicant_id),
+    ...(seed.outboundRequests ?? []).map((row) => row.applicant_id),
   ])
   const referencedCategories = collect(items.map((row) => row.category_id))
   const referencedItems = collect([
