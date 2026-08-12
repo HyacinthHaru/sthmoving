@@ -20,7 +20,8 @@
     "check": "npm run check:secrets && npm run lint && npm run typecheck && npm run test",
     "build:cloud": "tsc -p cloudfunctions/api/tsconfig.json",
     "build:server": "tsc -p tsconfig.server.build.json",
-    "start:server": "node server/dist/server/src/main.js"
+    "start:server": "node server/dist/server/src/main.js",
+    "migrate": "node server/dist/server/src/migration/cli.js"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

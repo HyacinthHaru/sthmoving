@@ -91,6 +91,26 @@ docker compose -f docker-compose.dev.yml up
 `TEST_DATABASE_URL` 指向它，`npm run test` 才会执行真实数据库用例；未配置时这些
 用例自动跳过。
 
+## 从微信云开发迁移数据
+
+先执行 `npm run build:server`，随后：
+
+1. 在微信云开发控制台把 7 个集合导出为 JSON Lines，文件按集合命名放进同一个目录，
+   例如 `users.jsonl`、`items.jsonl`。
+2. `npm run migrate -- check <导出目录>` 校验。它会逐条报出字段格式、枚举、长度、唯一性
+   和孤儿引用问题，也会核对 `_id` 是否等于 `openid` 的摘要——不等说明小程序 AppID 变过，
+   这种数据不能直接导入。
+3. `npm run migrate -- plan-files <导出目录> manifest.json` 生成云存储文件搬迁清单。
+   新路径由文件 ID 的摘要推导，同一份导出反复执行结果一致。
+4. 按清单把云存储文件下载到 `STORAGE_ROOT` 下的对应路径。
+5. `DATABASE_URL=... npm run migrate -- import <导出目录>` 导入。整个导入在一个事务里用
+   主键 UPSERT 完成，可以重复执行；结束后逐表比对数量，不一致会报错退出。
+
+导入会把记录里的 `cloud://` 引用重写成 `file://`，与第 3 步的清单一一对应。
+
+`scripts/backup.sh <备份目录>` 打包数据库与文件卷，`scripts/restore.sh <备份目录>` 反向恢复；
+恢复会覆盖现有数据，默认需要交互确认，`FORCE=yes` 可跳过。
+
 ## 当前实现范围
 
 - 微信登录、成员申请与审核
