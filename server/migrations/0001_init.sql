@@ -54,7 +54,7 @@ CREATE TABLE categories (
   status text NOT NULL CHECK (status IN ('ACTIVE', 'DISABLED', 'DELETED')),
   is_preset boolean NOT NULL DEFAULT false,
   sort_order integer NOT NULL DEFAULT 1000 CHECK (sort_order >= 0),
-  item_reference_count integer NOT NULL DEFAULT 0 CHECK (item_reference_count >= 0),
+  item_reference_count integer CHECK (item_reference_count >= 0),
   created_by text COLLATE "C" REFERENCES users (id),
   created_at timestamptz(3) NOT NULL,
   updated_at timestamptz(3) NOT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE items (
   description text NOT NULL DEFAULT '' CHECK (char_length(description) <= 2000),
   quantity_mode text NOT NULL CHECK (quantity_mode IN ('SINGLE', 'MULTIPLE')),
   quantity integer NOT NULL CHECK (quantity >= 1),
-  category_id text NOT NULL COLLATE "C" REFERENCES categories (id),
+  category_id text NOT NULL COLLATE "C" REFERENCES categories (id) DEFERRABLE INITIALLY DEFERRED,
   status text NOT NULL
     CHECK (status IN ('ACTIVE', 'OUTBOUND_PENDING', 'OFF_SHELF', 'DELETED')),
   version integer NOT NULL CHECK (version >= 1),
@@ -105,7 +105,7 @@ CREATE INDEX items_updated_at_id ON items (updated_at DESC, id DESC);
 
 CREATE TABLE item_labels (
   id text PRIMARY KEY COLLATE "C",
-  item_id text NOT NULL UNIQUE COLLATE "C" REFERENCES items (id),
+  item_id text NOT NULL UNIQUE COLLATE "C" REFERENCES items (id) DEFERRABLE INITIALLY DEFERRED,
   public_code text NOT NULL UNIQUE COLLATE "C" CHECK (public_code ~ '^[0-9A-F]{12}$'),
   page text NOT NULL CHECK (page = 'pages/item-detail/index'),
   scene text NOT NULL CHECK (scene ~ '^i=[0-9A-F]{12}$'),
@@ -124,7 +124,7 @@ CREATE TABLE item_labels (
 
 CREATE TABLE item_operation_logs (
   id text PRIMARY KEY COLLATE "C",
-  item_id text NOT NULL COLLATE "C" REFERENCES items (id),
+  item_id text NOT NULL COLLATE "C" REFERENCES items (id) DEFERRABLE INITIALLY DEFERRED,
   operator_id text NOT NULL COLLATE "C" REFERENCES users (id),
   action_type text NOT NULL
     CHECK (action_type IN ('CREATE', 'UPDATE', 'OUTBOUND_REQUEST',
@@ -144,7 +144,7 @@ CREATE INDEX item_operation_logs_item_created_at_id
 
 CREATE TABLE outbound_requests (
   id text PRIMARY KEY COLLATE "C",
-  item_id text NOT NULL COLLATE "C" REFERENCES items (id),
+  item_id text NOT NULL COLLATE "C" REFERENCES items (id) DEFERRABLE INITIALLY DEFERRED,
   applicant_id text NOT NULL COLLATE "C" REFERENCES users (id),
   reason text NOT NULL CHECK (char_length(reason) BETWEEN 1 AND 250),
   status text NOT NULL CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
