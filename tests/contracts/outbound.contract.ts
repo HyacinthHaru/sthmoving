@@ -30,7 +30,7 @@ function requestsAtHours(hours: number[]): OutboundRequestRecord[] {
   return hours.map((hour, index) =>
     createOutboundRequest(
       `request-${String(index).padStart(2, '0')}`,
-      'item-1',
+      `item-${String(index).padStart(2, '0')}`,
       'user-1',
       { created_at: atHour(hour) },
     ),
@@ -363,6 +363,7 @@ export function describeOutboundRepositoryContract(
 
     it('事务抛出异常时全部写入回滚', async () => {
       const repository = await harness.create({
+        users: [createUser('user-1'), createUser('user-3')],
         items: [createItem('item-1', { status: 'ACTIVE', version: 1 })],
         labels: [createLabel('item-1', { status: 'READY' })],
         outboundRequests: [
@@ -416,6 +417,7 @@ export function describeOutboundRepositoryContract(
 
     it('事务内可读到本事务尚未提交的写入', async () => {
       const repository = await harness.create({
+        users: [createUser('user-1')],
         items: [createItem('item-1', { status: 'ACTIVE', version: 1 })],
         labels: [createLabel('item-1', { status: 'READY' })],
       })

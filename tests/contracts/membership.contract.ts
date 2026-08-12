@@ -414,7 +414,7 @@ export function describeMembershipRepositoryContract(
 
     it('事务抛出异常时全部写入回滚', async () => {
       const repository = await harness.create({
-        users: [createUser('user-1')],
+        users: [createUser('user-1'), createUser('applicant-2')],
         joinRequests: [createJoinRequest('join-request-1', 'applicant-1')],
       })
 
